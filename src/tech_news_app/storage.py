@@ -169,6 +169,16 @@ class NewsStorage:
         ).fetchall()
         return [self._row_to_item(row) for row in rows]
 
+    def all_news(self) -> list[NewsItem]:
+        rows = self.connection.execute(
+            """
+            SELECT *
+            FROM news
+            ORDER BY COALESCE(published_at, first_seen_at) DESC, id DESC
+            """
+        ).fetchall()
+        return [self._row_to_item(row) for row in rows]
+
     def add_run_log(self, log: RunLog) -> None:
         self.connection.execute(
             """

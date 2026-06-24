@@ -7,7 +7,7 @@ from datetime import UTC, datetime
 from .config import Settings
 from .fetchers import NewsFetcher
 from .models import RunLog
-from .renderer import render_html, write_html
+from .renderer import write_site
 from .storage import NewsStorage
 from .summarizer import Summarizer
 
@@ -52,7 +52,6 @@ def run(no_llm: bool = False, dry_run: bool = False, output: str | None = None) 
             previous = existing.get(fetched.item_url)
             should_refresh_fallback = (
                 previous is not None
-                and summarizer.use_llm
                 and "自動要約ではありません。" in previous.summary_ja
             )
             if previous is not None and not should_refresh_fallback:
@@ -63,7 +62,7 @@ def run(no_llm: bool = False, dry_run: bool = False, output: str | None = None) 
             saved_items.append(saved)
             new_count += int(is_new)
 
-        latest = storage.latest_news()
+        latest = storage.all_news()
         new_ids = {item.id for item in saved_items if item.is_new}
         for item in latest:
             item.is_new = item.id in new_ids
@@ -83,9 +82,7 @@ def run(no_llm: bool = False, dry_run: bool = False, output: str | None = None) 
                 error_message=error_message,
             )
         )
-        html = render_html(latest, errors, run_at, new_count)
-
-    write_html(settings.output_path, html)
+    write_site(settings.output_path, latest, errors, run_at, new_count)
     print(
         f"Generated {settings.output_path} with {new_count} new item(s); "
         f"{len(errors)} source error(s)."

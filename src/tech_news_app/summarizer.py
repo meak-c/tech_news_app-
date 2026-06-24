@@ -24,17 +24,7 @@ class Summarizer:
             return self.fallback(item)
 
     def fallback(self, item: FetchedItem) -> str:
-        text = normalize_text(item.raw_text)
-        if not text:
-            text = item.title
-        excerpt = text[:280]
-        if len(text) > 280:
-            excerpt = excerpt.rstrip() + "…"
-        return (
-            f"・何が変わったか: {excerpt}\n"
-            "・影響: 公式リンクで詳細を確認してください。\n"
-            "・注意点: 自動要約ではありません。"
-        )
+        return "要約未生成。公式ページで確認してください。"
 
     def _gemini(self, item: FetchedItem) -> str:
         endpoint = (
@@ -43,6 +33,8 @@ class Summarizer:
         )
         prompt = (
             "次の公開済み公式リリースノートを日本語で簡潔に要約してください。\n"
+            "出力は必ず日本語にしてください。英語本文をそのまま貼り付けないでください。\n"
+            "製品名、機能名、API名、CLIコマンドだけは英語のままで構いません。\n"
             "必ず3行で、次の形式だけを返してください。\n"
             "・何が変わったか: ...\n・影響: ...\n・注意点: ...\n"
             "利用可能時期、Preview/GA、破壊的変更、料金、権限、セキュリティが"
