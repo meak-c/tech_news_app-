@@ -9,11 +9,12 @@ from bs4 import BeautifulSoup
 from .config import SOURCES, Settings, SourceConfig
 from .models import FetchedItem, SourceError
 from .parser import (
-    find_databricks_month_urls,
     normalize_text,
     parse_claude_code_changelog,
     parse_claude_release_notes,
+    parse_codex_changelog,
     parse_date,
+    parse_gemini_release_notes,
     parse_heading_document,
 )
 
@@ -51,26 +52,11 @@ class NewsFetcher:
             return parse_claude_release_notes(html, source)
         if source.kind == "claude_code":
             return parse_claude_code_changelog(html, source)
-        if source.kind == "databricks":
-            return self._fetch_databricks(html, source)
+        if source.kind == "gemini":
+            return parse_gemini_release_notes(html, source)
+        if source.kind == "codex":
+            return parse_codex_changelog(html, source)
         return parse_heading_document(html, source)
-
-    def _fetch_databricks(self, index_html: str, source: SourceConfig) -> list[FetchedItem]:
-        items: list[FetchedItem] = []
-        for month_url in find_databricks_month_urls(index_html, source.url):
-            response = self.session.get(month_url, timeout=self.settings.request_timeout)
-            response.raise_for_status()
-            month_source = SourceConfig(
-                product=source.product,
-                source_name=source.source_name,
-                url=month_url,
-                max_items=source.max_items - len(items),
-            )
-            html = response.content.decode("utf-8", errors="replace")
-            items.extend(parse_heading_document(html, month_source))
-            if len(items) >= source.max_items:
-                break
-        return items
 
     def _parse_atom(self, content: bytes, source: SourceConfig) -> list[FetchedItem]:
         feed = feedparser.parse(content)

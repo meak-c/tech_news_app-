@@ -12,8 +12,8 @@ def test_fallback_summary_does_not_include_long_english_body(tmp_path) -> None:
         gemini_min_interval_seconds=0,
     )
     item = FetchedItem(
-        product="Databricks",
-        source_name="Databricks Release Notes",
+        product="Gemini",
+        source_name="Gemini Release Notes",
         source_url="https://example.com",
         item_url="https://example.com/item",
         title="A feature is generally available",

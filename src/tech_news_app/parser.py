@@ -3,7 +3,6 @@ from __future__ import annotations
 import hashlib
 import re
 from datetime import UTC, datetime
-from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup, Tag
 from dateutil import parser as date_parser
@@ -229,14 +228,76 @@ def parse_claude_code_changelog(html: str, source: SourceConfig) -> list[Fetched
     return items
 
 
-def find_databricks_month_urls(html: str, source_url: str, limit: int = 2) -> list[str]:
+def parse_gemini_release_notes(html: str, source: SourceConfig) -> list[FetchedItem]:
     soup = BeautifulSoup(html, "html.parser")
-    root = soup.select_one("main") or soup
-    urls: list[str] = []
-    for link in root.find_all("a", href=True):
-        item_url = urljoin(source_url, link["href"])
-        if re.search(r"/release-notes/product/\d{4}/[a-z]+/?$", item_url) and item_url not in urls:
-            urls.append(item_url)
-        if len(urls) >= limit:
+    root = soup.select_one("article, main") or soup
+    current_date: datetime | None = None
+    items: list[FetchedItem] = []
+
+    for heading in root.find_all(["h2", "h3"]):
+        title = normalize_text(heading.get_text(" ", strip=True))
+        if not title:
+            continue
+        if heading.name == "h2":
+            if _looks_like_date(title):
+                current_date = parse_date(title)
+            continue
+
+        body_parts: list[str] = []
+        for sibling in heading.next_siblings:
+            if isinstance(sibling, Tag) and sibling.name in {"h1", "h2", "h3"}:
+                break
+            if isinstance(sibling, Tag):
+                text = normalize_text(sibling.get_text(" ", strip=True))
+                if text:
+                    body_parts.append(text)
+            if sum(map(len, body_parts)) >= 6000:
+                break
+        raw_text = normalize_text(" ".join(body_parts))[:6000]
+
+        anchor = heading.get("id") or _slug(
+            f"{current_date.date().isoformat() if current_date else ''}-{title}"
+        )
+        items.append(
+            FetchedItem(
+                product=source.product,
+                source_name=source.source_name,
+                source_url=source.url,
+                item_url=f"{source.url}#{anchor}",
+                title=title[:500],
+                published_at=current_date,
+                raw_text=raw_text,
+            )
+        )
+        if len(items) >= source.max_items:
             break
-    return urls
+    return items
+
+
+def parse_codex_changelog(html: str, source: SourceConfig) -> list[FetchedItem]:
+    soup = BeautifulSoup(html, "html.parser")
+    items: list[FetchedItem] = []
+    for entry in soup.select("li[data-products]"):
+        heading = entry.find("h3")
+        if heading is None:
+            continue
+        title = normalize_text(heading.get_text(" ", strip=True))
+        time_tag = entry.find("time")
+        published_at = parse_date(time_tag.get_text(strip=True)) if time_tag else None
+        body = entry.select_one("article") or entry
+        raw_text = normalize_text(body.get_text(" ", strip=True))[:6000]
+        entry_id = entry.get("id") or _slug(title)
+        items.append(
+            FetchedItem(
+                product=source.product,
+                source_name=source.source_name,
+                source_url=source.url,
+                item_url=f"{source.url}#{entry_id}",
+                title=title[:500],
+                published_at=published_at,
+                raw_text=raw_text,
+            )
+        )
+        if len(items) >= source.max_items:
+            break
+    return items

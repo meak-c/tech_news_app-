@@ -1,6 +1,6 @@
 # Tech News Morning
 
-ChatGPT、Claude、Claude Code、Databricksの公式更新情報だけを毎日収集し、日本語の短い朝刊HTMLを生成する個人用アプリです。GitHub ActionsでJST 03:07頃に実行し、GitHub Pagesへ公開します。
+ChatGPT、Claude、Claude Code、Gemini、Codexの公式更新情報だけを毎日収集し、日本語の短い朝刊HTMLを生成する個人用アプリです。GitHub ActionsでJST 03:07頃に実行し、GitHub Pagesへ公開します。
 
 ## 対象ソース
 
@@ -10,7 +10,8 @@ ChatGPT、Claude、Claude Code、Databricksの公式更新情報だけを毎日�
 | Claude | [Claude Release Notes](https://support.claude.com/en/articles/12138966-release-notes) |
 | Claude Code | [Claude Code Changelog](https://code.claude.com/docs/en/changelog) |
 | Claude Code | [GitHub Releases](https://github.com/anthropics/claude-code/releases) |
-| Databricks | [Databricks Release Notes](https://docs.databricks.com/aws/en/release-notes/) |
+| Gemini | [Gemini Release Notes](https://gemini.google/release-notes/) |
+| Codex | [Codex Changelog](https://developers.openai.com/codex/changelog) |
 
 一般ニュースサイト、ブログ、SNSは取得しません。
 

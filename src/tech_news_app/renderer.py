@@ -17,7 +17,7 @@ INDEX_TEMPLATE = """<!doctype html>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="color-scheme" content="light">
+  <meta name="color-scheme" content="light dark">
   <title>Tech News Morning</title>
   <link rel="stylesheet" href="styles.css">
   <script defer src="app.js"></script>
@@ -27,7 +27,7 @@ INDEX_TEMPLATE = """<!doctype html>
     <header class="hero">
       <p class="eyebrow">Official release notes only</p>
       <h1>Tech News Morning</h1>
-      <p class="lead">ChatGPT / Claude / Claude Code / Databricks の更新を朝用に短く整理します。</p>
+      <p class="lead">{{ products | join(' / ') }} の更新を朝用に短く整理します。</p>
       <section class="status-panel" aria-label="更新状況">
         <p id="status-message">{{ status_message }}</p>
         <dl class="status-stats">
@@ -101,20 +101,78 @@ STYLES_CSS = """
 :root {
   --bg-1: #eef6f6;
   --bg-2: #f8f3ea;
-  --surface: rgba(255, 255, 255, 0.82);
+  --bg-3: #eef1fb;
+  --surface: rgba(255, 255, 255, 0.78);
   --surface-strong: #ffffff;
-  --text: #21313a;
-  --muted: #687782;
-  --line: rgba(65, 89, 101, 0.16);
-  --accent: #247480;
+  --surface-hover: #fbfdfd;
+  --text: #1b2a32;
+  --muted: #66757f;
+  --faint: #93a1a9;
+  --line: rgba(58, 82, 94, 0.14);
+  --accent: #1f7a86;
+  --accent-2: #7c5cd6;
   --accent-soft: #dceff1;
-  --high: #c65a35;
-  --high-bg: #fff0e9;
-  --medium: #8d6a1d;
-  --medium-bg: #fff5d8;
-  --low: #52606b;
-  --low-bg: #edf1f3;
-  --shadow: 0 16px 42px rgba(45, 67, 80, 0.12);
+  --accent-contrast: #ffffff;
+  --high: #c15132;
+  --high-bg: #fdece3;
+  --medium: #92701a;
+  --medium-bg: #fbf1d3;
+  --low: #56646e;
+  --low-bg: #eef2f4;
+  --shadow: 0 18px 44px rgba(35, 55, 66, 0.12);
+  --shadow-sm: 0 6px 16px rgba(35, 55, 66, 0.08);
+  --radius-lg: 24px;
+  --radius-md: 16px;
+  --radius-sm: 12px;
+
+  --p-chatgpt-fg: #0f7a63;
+  --p-chatgpt-bg: #d9f2ea;
+  --p-claude-fg: #a83e6c;
+  --p-claude-bg: #fbe2ec;
+  --p-claude-code-fg: #5b4fc4;
+  --p-claude-code-bg: #e9e4fb;
+  --p-gemini-fg: #2f5fd6;
+  --p-gemini-bg: #e0e8fd;
+  --p-codex-fg: #157a91;
+  --p-codex-bg: #d8f0f4;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-1: #0b1420;
+    --bg-2: #0f1a2a;
+    --bg-3: #14152a;
+    --surface: rgba(23, 33, 46, 0.72);
+    --surface-strong: #141e2b;
+    --surface-hover: #182533;
+    --text: #e9eff2;
+    --muted: #9db0bb;
+    --faint: #6d818c;
+    --line: rgba(160, 190, 205, 0.14);
+    --accent: #5fd0d9;
+    --accent-2: #a893f5;
+    --accent-soft: rgba(95, 208, 217, 0.16);
+    --accent-contrast: #06222a;
+    --high: #ff9a73;
+    --high-bg: rgba(255, 154, 115, 0.14);
+    --medium: #f0c766;
+    --medium-bg: rgba(240, 199, 102, 0.14);
+    --low: #a9b8c1;
+    --low-bg: rgba(169, 184, 193, 0.12);
+    --shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
+    --shadow-sm: 0 8px 20px rgba(0, 0, 0, 0.35);
+
+    --p-chatgpt-fg: #58e0bf;
+    --p-chatgpt-bg: rgba(88, 224, 191, 0.14);
+    --p-claude-fg: #f193bc;
+    --p-claude-bg: rgba(241, 147, 188, 0.14);
+    --p-claude-code-fg: #b3a4f7;
+    --p-claude-code-bg: rgba(179, 164, 247, 0.16);
+    --p-gemini-fg: #8fb0ff;
+    --p-gemini-bg: rgba(143, 176, 255, 0.16);
+    --p-codex-fg: #6fdcef;
+    --p-codex-bg: rgba(111, 220, 239, 0.14);
+  }
 }
 
 * { box-sizing: border-box; }
@@ -128,16 +186,25 @@ body {
   font-size: 16px;
   line-height: 1.65;
   background:
-    radial-gradient(circle at 18% 0%, rgba(109, 180, 185, 0.26), transparent 30rem),
-    radial-gradient(circle at 90% 8%, rgba(238, 188, 114, 0.24), transparent 24rem),
-    linear-gradient(145deg, var(--bg-1), var(--bg-2));
+    radial-gradient(circle at 14% -4%,
+      color-mix(in srgb, var(--accent) 20%, transparent), transparent 32rem),
+    radial-gradient(circle at 92% 4%,
+      color-mix(in srgb, var(--accent-2) 18%, transparent), transparent 26rem),
+    linear-gradient(160deg, var(--bg-1), var(--bg-2) 55%, var(--bg-3));
+  background-attachment: fixed;
   min-height: 100vh;
+  transition: background-color 200ms ease;
 }
 
 a { color: var(--accent); text-underline-offset: 3px; }
 
 button, select, input {
   font: inherit;
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--accent-contrast);
 }
 
 .page-shell {
@@ -151,19 +218,35 @@ button, select, input {
 }
 
 .eyebrow {
-  margin: 0 0 6px;
+  margin: 0 0 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   color: var(--accent);
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   font-weight: 800;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
+}
+
+.eyebrow::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent);
 }
 
 h1 {
   margin: 0;
-  font-size: clamp(2rem, 9vw, 4.2rem);
+  font-size: clamp(2rem, 9vw, 4rem);
   line-height: 0.98;
-  letter-spacing: -0.06em;
+  letter-spacing: -0.05em;
+  background: linear-gradient(120deg, var(--text) 40%, var(--accent) 90%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
 }
 
 .lead {
@@ -178,11 +261,12 @@ h1 {
   border: 1px solid var(--line);
   background: var(--surface);
   box-shadow: var(--shadow);
-  backdrop-filter: blur(16px);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
 }
 
 .status-panel {
-  border-radius: 22px;
+  border-radius: var(--radius-lg);
   padding: 16px;
 }
 
@@ -200,9 +284,10 @@ h1 {
 }
 
 .status-stats div {
-  border-radius: 16px;
+  border-radius: var(--radius-md);
   padding: 10px 12px;
-  background: rgba(255, 255, 255, 0.62);
+  background: color-mix(in srgb, var(--surface-strong) 60%, transparent);
+  border: 1px solid var(--line);
 }
 
 .status-stats dt {
@@ -214,14 +299,18 @@ h1 {
   margin: 0;
   font-size: 1.35rem;
   font-weight: 800;
+  font-variant-numeric: tabular-nums;
 }
 
 .warning-panel {
   margin-top: 14px;
-  border-radius: 18px;
+  border-radius: var(--radius-md);
   padding: 14px 16px;
-  background: rgba(255, 248, 227, 0.9);
+  background: var(--medium-bg);
+  color: var(--medium);
 }
+
+.warning-panel strong { color: var(--text); }
 
 .filters {
   position: sticky;
@@ -230,7 +319,7 @@ h1 {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
-  border-radius: 22px;
+  border-radius: var(--radius-lg);
   padding: 12px;
 }
 
@@ -254,18 +343,19 @@ select,
 input[type="search"] {
   width: 100%;
   min-width: 0;
-  border: 1px solid rgba(55, 80, 92, 0.18);
-  border-radius: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
   padding: 10px 11px;
-  background: rgba(255, 255, 255, 0.82);
+  background: color-mix(in srgb, var(--surface-strong) 85%, transparent);
   color: var(--text);
   outline: none;
+  transition: border-color 140ms ease, box-shadow 140ms ease;
 }
 
 select:focus,
 input[type="search"]:focus {
-  border-color: rgba(36, 116, 128, 0.72);
-  box-shadow: 0 0 0 3px rgba(36, 116, 128, 0.13);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
 .results-bar {
@@ -283,12 +373,15 @@ input[type="search"]:focus {
 #show-more {
   border: 0;
   border-radius: 999px;
-  padding: 9px 14px;
-  color: #fff;
-  background: linear-gradient(135deg, #247480, #315d7e);
-  box-shadow: 0 8px 18px rgba(36, 116, 128, 0.22);
+  padding: 9px 16px;
+  color: var(--accent-contrast);
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: transform 140ms ease, box-shadow 140ms ease;
 }
 
+#show-more:hover { transform: translateY(-1px); box-shadow: 0 10px 24px rgba(31, 122, 134, 0.24); }
 #show-more[hidden] { display: none; }
 
 .news-list {
@@ -299,9 +392,10 @@ input[type="search"]:focus {
 .card {
   position: relative;
   overflow: hidden;
-  border-radius: 24px;
+  border-radius: var(--radius-lg);
   background: var(--surface-strong);
-  animation: card-in 180ms ease-out both;
+  animation: card-in 220ms ease-out both;
+  transition: box-shadow 160ms ease, transform 160ms ease;
 }
 
 @keyframes card-in {
@@ -309,16 +403,24 @@ input[type="search"]:focus {
   to { opacity: 1; transform: translateY(0); }
 }
 
+@media (hover: hover) {
+  .card:hover {
+    box-shadow: 0 22px 50px rgba(35, 55, 66, 0.16);
+    transform: translateY(-2px);
+  }
+}
+
 .card-summary {
   width: 100%;
   display: grid;
   gap: 10px;
   border: 0;
-  padding: 17px;
+  padding: 17px 17px 17px 20px;
   color: inherit;
   text-align: left;
   background: transparent;
   cursor: pointer;
+  border-left: 3px solid var(--tag-fg, var(--accent));
 }
 
 .card-top {
@@ -340,17 +442,31 @@ input[type="search"]:focus {
 }
 
 .tag {
-  color: #1c5862;
+  color: var(--accent);
   background: var(--accent-soft);
 }
+
+.card[data-product="ChatGPT"] { --tag-fg: var(--p-chatgpt-fg); }
+.card[data-product="ChatGPT"] .tag { color: var(--p-chatgpt-fg); background: var(--p-chatgpt-bg); }
+.card[data-product="Claude"] { --tag-fg: var(--p-claude-fg); }
+.card[data-product="Claude"] .tag { color: var(--p-claude-fg); background: var(--p-claude-bg); }
+.card[data-product="Claude Code"] { --tag-fg: var(--p-claude-code-fg); }
+.card[data-product="Claude Code"] .tag {
+  color: var(--p-claude-code-fg);
+  background: var(--p-claude-code-bg);
+}
+.card[data-product="Gemini"] { --tag-fg: var(--p-gemini-fg); }
+.card[data-product="Gemini"] .tag { color: var(--p-gemini-fg); background: var(--p-gemini-bg); }
+.card[data-product="Codex"] { --tag-fg: var(--p-codex-fg); }
+.card[data-product="Codex"] .tag { color: var(--p-codex-fg); background: var(--p-codex-bg); }
 
 .badge-high { color: var(--high); background: var(--high-bg); }
 .badge-medium { color: var(--medium); background: var(--medium-bg); }
 .badge-low { color: var(--low); background: var(--low-bg); }
 
 .new-label {
-  color: #fff;
-  background: linear-gradient(135deg, #c65a35, #d4894f);
+  color: var(--accent-contrast);
+  background: linear-gradient(135deg, var(--high), #e08a5f);
 }
 
 .date {
@@ -358,6 +474,7 @@ input[type="search"]:focus {
   color: var(--muted);
   font-size: 0.78rem;
   font-weight: 650;
+  font-variant-numeric: tabular-nums;
 }
 
 .card h2 {
@@ -396,7 +513,7 @@ input[type="search"]:focus {
 .card-details {
   display: none;
   border-top: 1px solid var(--line);
-  padding: 0 17px 17px;
+  padding: 0 17px 17px 20px;
 }
 
 .card.is-open .card-details {
@@ -551,7 +668,7 @@ function initialItems(items) {
   if (newItems.length) {
     newItems.forEach(add);
   } else {
-    for (const product of ["ChatGPT", "Claude", "Claude Code", "Databricks"]) {
+    for (const product of __PRODUCTS__) {
       items.filter((item) => item.product === product).slice(0, 3).forEach(add);
     }
   }
@@ -725,6 +842,10 @@ def render_news_json(items: list[NewsItem], run_at: datetime, new_count: int) ->
     return json.dumps(payload, ensure_ascii=False, indent=2)
 
 
+def render_app_js() -> str:
+    return APP_JS.replace("__PRODUCTS__", json.dumps(list(PRODUCTS), ensure_ascii=False))
+
+
 def write_text(path: Path, content: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(content, encoding="utf-8")
@@ -740,5 +861,5 @@ def write_site(
     public_dir = output_path.parent
     write_text(output_path, render_html(items, errors, run_at, new_count))
     write_text(public_dir / "styles.css", STYLES_CSS.strip() + "\n")
-    write_text(public_dir / "app.js", APP_JS.strip() + "\n")
+    write_text(public_dir / "app.js", render_app_js().strip() + "\n")
     write_text(public_dir / "news.json", render_news_json(items, run_at, new_count) + "\n")

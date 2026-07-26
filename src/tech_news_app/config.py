@@ -66,11 +66,17 @@ SOURCES = (
         kind="atom",
     ),
     SourceConfig(
-        product="Databricks",
-        source_name="Databricks Release Notes",
-        url="https://docs.databricks.com/aws/en/release-notes/",
-        kind="databricks",
+        product="Gemini",
+        source_name="Gemini Release Notes",
+        url="https://gemini.google/release-notes/",
+        kind="gemini",
+    ),
+    SourceConfig(
+        product="Codex",
+        source_name="Codex Changelog",
+        url="https://developers.openai.com/codex/changelog",
+        kind="codex",
     ),
 )
 
-PRODUCTS = ("ChatGPT", "Claude", "Claude Code", "Databricks")
+PRODUCTS = ("ChatGPT", "Claude", "Claude Code", "Gemini", "Codex")
