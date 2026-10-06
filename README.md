@@ -15,13 +15,22 @@ ChatGPT、Claude、Claude Code、Gemini、Codexの公式更新情報だけを毎
 
 一般ニュースサイト、ブログ、SNSは取得しません。
 
+## ディレクトリ構成
+
+```text
+collector/   Python: 取得・要約・DB保存・静的ファイル生成
+data/        SQLite (news.sqlite)
+public/      GitHub Pagesへ配信する生成物
+docs/        設計ドキュメント
+```
+
 ## ローカル実行
 
-前提はPython 3.12と[`uv`](https://docs.astral.sh/uv/)です。
+前提はPython 3.12と[`uv`](https://docs.astral.sh/uv/)です。Pythonプロジェクトは`collector/`にあります。`data/`と`public/`はリポジトリ直下を使うため、コマンドはリポジトリ直下から`--project collector`付きで実行します。
 
 ```bash
-uv sync --all-extras
-uv run python -m tech_news_app.main --no-llm
+uv sync --project collector --all-extras
+uv run --project collector python -m tech_news_app.main --no-llm
 ```
 
 生成物:
@@ -35,9 +44,9 @@ uv run python -m tech_news_app.main --no-llm
 主なオプション:
 
 ```bash
-uv run python -m tech_news_app.main --no-llm
-uv run python -m tech_news_app.main --dry-run
-uv run python -m tech_news_app.main --output public/preview.html
+uv run --project collector python -m tech_news_app.main --no-llm
+uv run --project collector python -m tech_news_app.main --dry-run
+uv run --project collector python -m tech_news_app.main --output public/preview.html
 ```
 
 `--dry-run`はニュース取得結果をJSONで表示し、DBとHTMLを変更しません。
@@ -58,7 +67,7 @@ gemini-2.5-flash-lite
 export GEMINI_API_KEY="実際のAPIキー"
 export GEMINI_MODEL="gemini-2.5-flash-lite"
 export GEMINI_MIN_INTERVAL_SECONDS="4.1"
-uv run python -m tech_news_app.main
+uv run --project collector python -m tech_news_app.main
 ```
 
 `.env`を使う場合は手動で読み込んでください。このアプリは秘密情報の意図しない読み込みを避けるため、`.env`を自動ロードしません。
@@ -67,7 +76,7 @@ uv run python -m tech_news_app.main
 set -a
 source .env
 set +a
-uv run python -m tech_news_app.main
+uv run --project collector python -m tech_news_app.main
 ```
 
 APIキーの実値をソースコード、`.env.example`、HTML、DBへ保存しないでください。GitHubではRepository Secret `GEMINI_API_KEY`へ保存します。
@@ -79,8 +88,8 @@ Free Tierへ送る内容は公開済みの公式リリースノートに限定�
 ## テストと静的チェック
 
 ```bash
-uv run pytest
-uv run ruff check .
+uv run --project collector pytest collector
+uv run --project collector ruff check collector
 ```
 
 ## GitHub Actions

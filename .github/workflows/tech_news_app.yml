@@ -28,7 +28,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version-file: .python-version
+          python-version-file: collector/.python-version
 
       - name: Install uv
         uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
@@ -37,16 +37,16 @@ jobs:
           enable-cache: true
 
       - name: Install project
-        run: uv sync --locked --all-extras
+        run: uv sync --project collector --locked --all-extras
 
       - name: Run tests
-        run: uv run pytest
+        run: uv run --project collector pytest collector
 
       - name: Fetch news and render site
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_MODEL: gemini-2.5-flash-lite
-        run: uv run python -m tech_news_app.main
+        run: uv run --project collector python -m tech_news_app.main
 
       - name: Persist SQLite database
         run: |

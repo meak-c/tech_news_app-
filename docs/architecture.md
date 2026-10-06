@@ -50,14 +50,14 @@ GitHub-hosted runner上で以下を実行します。
 1. リポジトリをcheckout
 2. Python 3.12をセットアップ
 3. `uv`をセットアップ
-4. `uv sync --locked --all-extras` で依存関係を復元
-5. `uv run pytest` でテストを実行
+4. `uv sync --project collector --locked --all-extras` で依存関係を復元
+5. `uv run --project collector pytest collector` でテストを実行
 
 この段階でテストが失敗すると、ニュース取得やPagesデプロイには進みません。
 
 ### 3. 公式ソースからニュースを取得する
 
-Pythonアプリは `src/tech_news_app/fetchers.py` と `parser.py` を使って、公式または公式に準ずる一次情報だけを取得します。
+Pythonアプリは `collector/src/tech_news_app/fetchers.py` と `parser.py` を使って、公式または公式に準ずる一次情報だけを取得します。
 
 対象は以下です。
 
@@ -72,7 +72,7 @@ Pythonアプリは `src/tech_news_app/fetchers.py` と `parser.py` を使って�
 
 ### 4. Gemini APIで日本語要約する
 
-`GEMINI_API_KEY` がGitHub ActionsのRepository Secretに設定されている場合、`src/tech_news_app/summarizer.py` がGemini APIを呼び出して日本語要約を生成します。
+`GEMINI_API_KEY` がGitHub ActionsのRepository Secretに設定されている場合、`collector/src/tech_news_app/summarizer.py` がGemini APIを呼び出して日本語要約を生成します。
 
 使用モデルは環境変数で指定します。
 
@@ -115,7 +115,7 @@ GitHub-hosted runnerは実行ごとに破棄されるため、SQLiteをrunner内
 
 ### 6. GitHub Pages用の静的ファイルを生成する
 
-`src/tech_news_app/renderer.py` が以下を生成します。
+`collector/src/tech_news_app/renderer.py` が以下を生成します。
 
 ```text
 public/index.html
@@ -171,7 +171,7 @@ sequenceDiagram
     participant Pub as public files
     participant Pages as GitHub Pages
 
-    GH->>App: uv run python -m tech_news_app.main
+    GH->>App: uv run --project collector python -m tech_news_app.main
     App->>Src: 公式リリースノート取得
     Src-->>App: HTML / Atom feed
     App->>DB: 既存ニュース照合
