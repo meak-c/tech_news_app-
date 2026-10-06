@@ -36,13 +36,28 @@ jobs:
           version: "0.11.23"
           enable-cache: true
 
-      - name: Install project
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: web/.nvmrc
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install collector
         run: uv sync --project collector --locked --all-extras
 
-      - name: Run tests
+      - name: Install web
+        working-directory: web
+        run: npm ci
+
+      - name: Run collector tests
         run: uv run --project collector pytest collector
 
-      - name: Fetch news and render site
+      - name: Run web tests
+        working-directory: web
+        run: npm test
+
+      - name: Fetch news and export news.json
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_MODEL: gemini-3.5-flash-lite
@@ -60,13 +75,17 @@ jobs:
             git push
           fi
 
+      - name: Build web
+        working-directory: web
+        run: npm run build
+
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
         with:
-          path: public
+          path: web/dist
 
       - name: Mark page ready
         id: page

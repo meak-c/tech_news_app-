@@ -1,6 +1,6 @@
 # Tech News Morning
 
-ChatGPT、Claude、Claude Code、Gemini、Codexの公式更新情報だけを毎日収集し、日本語の短い朝刊HTMLを生成する個人用アプリです。GitHub ActionsでJST 03:07頃に実行し、GitHub Pagesへ公開します。
+ChatGPT、Claude、Claude Code、Gemini、Codexの公式更新情報だけを毎日収集し、日本語で要約した朝刊サイトを生成する個人用アプリです。GitHub ActionsでJST 03:07頃に実行し、GitHub Pagesへ公開します。
 
 ## 対象ソース
 
@@ -18,15 +18,19 @@ ChatGPT、Claude、Claude Code、Gemini、Codexの公式更新情報だけを毎
 ## ディレクトリ構成
 
 ```text
-collector/   Python: 取得・要約・DB保存・静的ファイル生成
+collector/   Python: 取得・要約・DB保存・news.json出力
+web/         Vite + React + TypeScript: news.jsonを表示する静的サイト
 data/        SQLite (news.sqlite)
-public/      GitHub Pagesへ配信する生成物
 docs/        設計ドキュメント
 ```
 
 ## ローカル実行
 
-前提はPython 3.12と[`uv`](https://docs.astral.sh/uv/)です。Pythonプロジェクトは`collector/`にあります。`data/`と`public/`はリポジトリ直下を使うため、コマンドはリポジトリ直下から`--project collector`付きで実行します。
+前提はPython 3.12、[`uv`](https://docs.astral.sh/uv/)、Node.js 24です。
+
+### collector(Python)
+
+`data/`と`web/public/`はリポジトリ直下からの相対パスで扱うため、コマンドはリポジトリ直下から`--project collector`付きで実行します。
 
 ```bash
 uv sync --project collector --all-extras
@@ -36,20 +40,29 @@ uv run --project collector python -m tech_news_app.main --no-llm
 生成物:
 
 - SQLite: `data/news.sqlite`
-- HTML: `public/index.html`
-- CSS: `public/styles.css`
-- JavaScript: `public/app.js`
-- ニュースJSON: `public/news.json`
+- ニュースJSON: `web/public/news.json`
 
 主なオプション:
 
 ```bash
 uv run --project collector python -m tech_news_app.main --no-llm
 uv run --project collector python -m tech_news_app.main --dry-run
-uv run --project collector python -m tech_news_app.main --output public/preview.html
+uv run --project collector python -m tech_news_app.main --export-only
+uv run --project collector python -m tech_news_app.main --output /tmp/news.json
 ```
 
-`--dry-run`はニュース取得結果をJSONで表示し、DBとHTMLを変更しません。
+- `--dry-run`: ニュース取得結果をJSONで表示し、DBとnews.jsonを変更しません。
+- `--export-only`: 取得・要約をせず、既存DBからnews.jsonだけを書き出します。画面開発用です。
+
+### web(React)
+
+```bash
+uv run --project collector python -m tech_news_app.main --export-only
+cd web
+npm install
+npm run dev      # 開発サーバー
+npm run build    # web/dist へ本番ビルド
+```
 
 ## Gemini API
 
@@ -79,7 +92,7 @@ set +a
 uv run --project collector python -m tech_news_app.main
 ```
 
-APIキーの実値をソースコード、`.env.example`、HTML、DBへ保存しないでください。GitHubではRepository Secret `GEMINI_API_KEY`へ保存します。
+APIキーの実値をソースコード、`.env.example`、news.json、DBへ保存しないでください。GitHubではRepository Secret `GEMINI_API_KEY`へ保存します。
 
 Free Tierへ送る内容は公開済みの公式リリースノートに限定しています。料金とレート制限は変更されるため、運用前に[Gemini API Pricing](https://ai.google.dev/gemini-api/docs/pricing)を確認してください。
 
@@ -90,6 +103,7 @@ Free Tierへ送る内容は公開済みの公式リリースノートに限定�
 ```bash
 uv run --project collector pytest collector
 uv run --project collector ruff check collector
+cd web && npm test && npm run typecheck
 ```
 
 ## GitHub Actions
@@ -98,10 +112,10 @@ workflowは`.github/workflows/tech_news_app.yml`です。
 
 - 毎日18:07 UTC（JST 03:07頃）に実行
 - Actions画面から手動実行可能
-- テスト後にニュースを取得
+- テスト後にニュースを取得し、`web/public/news.json`を出力
 - `data/news.sqlite`をリポジトリへcommitして次回へ引き継ぐ
-- `public/`をGitHub Pagesへデプロイ
-- 1つの取得元が失敗しても、残りのニュースからHTMLを生成
+- `web/`をビルドし、`web/dist/`をGitHub Pagesへデプロイ
+- 1つの取得元が失敗しても、残りのニュースからサイトを生成
 
 SQLiteをpushするため、workflowには`contents: write`が必要です。branch protectionでbotの直接pushを禁止している場合、この永続化処理は失敗します。
 
@@ -113,13 +127,13 @@ GitHub FreeでPagesを無料利用する場合はpublicリポジトリが基本�
 
 ## 更新がない日の挙動
 
-毎回HTMLを生成します。新規ニュースがなければ、次の案内とDB内の最新ニュースを表示します。
+毎回サイトを生成します。新規ニュースがなければ、次の案内とDB内の最新ニュースを表示します。
 
 ```text
 本日の新ニュースはありませんでした。
 ```
 
-v2では初期表示を絞り込みます。新着がある日は新着を全件表示し、新着がない日は各プロダクトの最新3件とhigh importanceの最新10件を表示します。過去分はProduct、Month、Importance、Searchのフィルタ、または「さらに表示」から確認できます。
+初期表示(Highlights)は絞り込みます。新着がある日は新着を全件表示し、新着がない日は各プロダクトの最新3件とhigh importanceの最新10件を表示します。過去分はプロダクト・重要度・月・検索のフィルタ、または「すべてのニュースを見る」から確認できます。
 
 ## データ永続化
 
@@ -135,7 +149,7 @@ SQLiteはバイナリなので履歴サイズが増えます。長期運用で�
 
 ### HTTP 403、429
 
-取得先またはGemini APIの制限です。HTMLには取得エラーが表示されます。Geminiの失敗時は「要約未生成」となり、次回以降に再要約されます。
+取得先またはGemini APIの制限です。サイトには取得エラーが表示されます。Geminiの失敗時は「要約未生成」となり、次回以降に再要約されます。
 
 ### DBをpushできない
 

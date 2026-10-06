@@ -6,9 +6,9 @@ from collections.abc import Collection
 from datetime import UTC, datetime
 
 from .config import Settings
+from .exporter import write_news_json
 from .fetchers import NewsFetcher
 from .models import FetchedItem, NewsItem, RunLog
-from .renderer import write_site
 from .storage import NewsStorage
 from .summarizer import Summarizer, needs_resummary
 
@@ -22,9 +22,14 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Fetch and print results without updating the DB or writing HTML.",
+        help="Fetch and print results without updating the DB or writing news.json.",
     )
-    parser.add_argument("--output", help="Override the generated HTML path.")
+    parser.add_argument(
+        "--export-only",
+        action="store_true",
+        help="Write news.json from the existing DB without fetching or summarizing.",
+    )
+    parser.add_argument("--output", help="Override the generated news.json path.")
     return parser
 
 
@@ -65,8 +70,23 @@ def backfill_summaries(
     return updated
 
 
-def run(no_llm: bool = False, dry_run: bool = False, output: str | None = None) -> int:
+def export_only(settings: Settings) -> int:
+    with NewsStorage(settings.db_path) as storage:
+        latest = storage.all_news()
+    write_news_json(settings.output_path, latest, [], datetime.now(UTC), 0)
+    print(f"Exported {len(latest)} item(s) to {settings.output_path}.")
+    return 0 if latest else 1
+
+
+def run(
+    no_llm: bool = False,
+    dry_run: bool = False,
+    output: str | None = None,
+    export: bool = False,
+) -> int:
     settings = Settings.from_env(output_override=output)
+    if export:
+        return export_only(settings)
     run_at = datetime.now(UTC)
     fetched_items, errors = NewsFetcher(settings).fetch_all()
 
@@ -123,7 +143,7 @@ def run(no_llm: bool = False, dry_run: bool = False, output: str | None = None) 
                 error_message=error_message,
             )
         )
-    write_site(settings.output_path, latest, errors, run_at, new_count)
+    write_news_json(settings.output_path, latest, errors, run_at, new_count)
     print(
         f"Generated {settings.output_path} with {new_count} new item(s); "
         f"{backfilled} backfilled summary(ies); {len(errors)} source error(s)."
@@ -133,7 +153,14 @@ def run(no_llm: bool = False, dry_run: bool = False, output: str | None = None) 
 
 def main() -> None:
     args = build_parser().parse_args()
-    raise SystemExit(run(no_llm=args.no_llm, dry_run=args.dry_run, output=args.output))
+    raise SystemExit(
+        run(
+            no_llm=args.no_llm,
+            dry_run=args.dry_run,
+            output=args.output,
+            export=args.export_only,
+        )
+    )
 
 
 if __name__ == "__main__":

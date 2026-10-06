@@ -5,9 +5,7 @@ __pycache__/
 .ruff_cache/
 dist/
 .env
-public/index.html
-public/styles.css
-public/app.js
-public/news.json
+node_modules/
+web/public/news.json
 data/news.sqlite-shm
 data/news.sqlite-wal

@@ -12,7 +12,7 @@ flowchart TD
     Sources[Official sources<br>OpenAI / Anthropic / Google / GitHub Releases]
     Gemini[Gemini API<br>Japanese summary]
     SQLite[(data/news.sqlite<br>news + run_logs)]
-    Public[public/<br>index.html / styles.css / app.js / news.json]
+    Public[web/public/news.json<br>+ web/ React build -> web/dist]
     Repo[(GitHub repository<br>source + SQLite history)]
     Artifact[Pages artifact]
     Pages[GitHub Pages]
@@ -68,7 +68,7 @@ Pythonアプリは `collector/src/tech_news_app/fetchers.py` と `parser.py` を
 - Google: Gemini Release Notes
 - OpenAI: Codex Changelog
 
-取得元ごとにHTML構造が違うため、パーサーはソース別に分けています。1つのソース取得に失敗しても、他のソースの取得とHTML生成は継続します。
+取得元ごとにHTML構造が違うため、パーサーはソース別に分けています。1つのソース取得に失敗しても、他のソースの取得とサイト生成は継続します。
 
 ### 4. Gemini APIで日本語要約する
 
@@ -115,29 +115,19 @@ SQLiteには主に2種類のデータを保存します。
 
 GitHub-hosted runnerは実行ごとに破棄されるため、SQLiteをrunner内に置くだけでは次回へ引き継げません。そのため、workflowの最後で `data/news.sqlite` をGitHubリポジトリへcommitしてpushします。
 
-### 6. GitHub Pages用の静的ファイルを生成する
+### 6. news.jsonを出力し、Webサイトをビルドする
 
-`collector/src/tech_news_app/renderer.py` が以下を生成します。
+`collector/src/tech_news_app/exporter.py` がDBの全ニュースを `web/public/news.json` へ出力します。news.jsonには記事一覧のほか、生成日時、新着件数、プロダクト一覧、取得エラーを含めます。
 
-```text
-public/index.html
-public/styles.css
-public/app.js
-public/news.json
-```
+画面は `web/`(Vite + React + TypeScript)です。`npm run build` で `web/public/news.json` を含む静的ファイルを `web/dist/` へ出力します。
 
-役割は次のとおりです。
-
-- `index.html`: アプリの外枠、フィルタUI、読み込み先の定義
-- `styles.css`: スマホ優先のカードUI、stickyフィルタ、グラデーション背景
-- `app.js`: Product / Month / Importance / Searchフィルタ、カード開閉、初期表示制御
-- `news.json`: ニュースデータ本体
-
-HTMLにニュース全件を直接埋め込まず、`news.json` をJavaScriptで読み込む構成です。これにより、初期表示ではニュースを絞り込みつつ、フィルタや「さらに表示」で過去ニュースへアクセスできます。
+- `src/App.tsx`: news.jsonの読み込み、フィルタ状態、初期表示(Highlights)と「さらに表示」の制御
+- `src/components/`: ヘッダー、フィルタバー、ニュースカード
+- `src/lib/news.ts`: 絞り込み、初期表示の選定、日付グループ化、3行要約の分解(vitestでテスト)
 
 ### 7. GitHub Pagesへデプロイする
 
-workflowは `public/` をPages artifactとしてアップロードし、`actions/deploy-pages` でGitHub Pagesへ配信します。
+workflowは `web/dist/` をPages artifactとしてアップロードし、`actions/deploy-pages` でGitHub Pagesへ配信します。
 
 スマホからはGitHub PagesのURLへアクセスします。
 
@@ -145,21 +135,21 @@ workflowは `public/` をPages artifactとしてアップロードし、`actions
 https://meak-c.github.io/tech_news_app-/
 ```
 
-ブラウザは `index.html` を読み込み、その後 `styles.css`、`app.js`、`news.json` を取得してニュースダッシュボードを表示します。
+ブラウザは `index.html` とビルド済みのJS/CSSを読み込み、その後 `news.json` を取得してニュースダッシュボードを表示します。
 
 ## 主要コンポーネント
 
 | コンポーネント | 役割 |
 |---|---|
 | GitHub Actions | 定期実行、テスト、ニュース生成、DB永続化、Pagesデプロイ |
-| GitHub-hosted runner | Pythonアプリを実行する一時的なUbuntu環境 |
+| GitHub-hosted runner | Pythonアプリの実行とWebビルドを行う一時的なUbuntu環境 |
 | uv | Python依存関係の解決と実行 |
-| Python app | 取得、解析、要約、保存、静的ファイル生成 |
+| Python app (collector/) | 取得、解析、要約、保存、news.json出力 |
 | Gemini API | 日本語要約生成 |
 | SQLite | ニュース履歴と実行ログの保存 |
 | GitHub repository | ソースコードとSQLiteの永続化 |
 | GitHub Pages | スマホから閲覧する静的サイト配信 |
-| Vanilla JavaScript | フィルタ、検索、カード開閉、初期表示制御 |
+| React app (web/) | フィルタ、検索、カード開閉、初期表示制御 |
 
 ## データの流れ
 
@@ -170,7 +160,7 @@ sequenceDiagram
     participant Src as Official sources
     participant DB as SQLite
     participant LLM as Gemini API
-    participant Pub as public files
+    participant Pub as web/
     participant Pages as GitHub Pages
 
     GH->>App: uv run --project collector python -m tech_news_app.main
@@ -180,16 +170,17 @@ sequenceDiagram
     App->>LLM: 新規・未要約ニュースを要約
     LLM-->>App: 日本語3点要約
     App->>DB: news / run_logs保存
-    App->>Pub: index.html / CSS / JS / JSON生成
+    App->>Pub: web/public/news.json出力
     GH->>DB: data/news.sqliteをcommit & push
-    GH->>Pages: public/をdeploy
+    GH->>Pub: npm run build
+    GH->>Pages: web/dist/をdeploy
 ```
 
 ## 運用上の注意
 
 - Gemini APIキーはGitHub Secretsの `GEMINI_API_KEY` に保存します。
-- APIキーの実値はMarkdown、ソースコード、HTML、JSON、SQLite、ログへ書きません。
+- APIキーの実値はMarkdown、ソースコード、JSON、SQLite、ログへ書きません。
 - Free Tier運用では、Geminiへ送る内容を公開済み公式リリースノートに限定します。
 - GitHub Pages artifactだけではSQLiteは永続化されないため、DBをリポジトリへcommitします。
 - SQLiteはバイナリファイルなので、長期運用では履歴サイズが増えます。
-- 取得元サイトのHTML構造変更で一部パーサーが壊れる可能性があります。その場合も他ソースの取得とHTML生成は継続する設計です。
+- 取得元サイトのHTML構造変更で一部パーサーが壊れる可能性があります。その場合も他ソースの取得とサイト生成は継続する設計です。

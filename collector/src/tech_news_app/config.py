@@ -30,7 +30,7 @@ class Settings:
         return cls(
             db_path=Path(os.getenv("TECH_NEWS_DB_PATH", "data/news.sqlite")),
             output_path=Path(
-                output_override or os.getenv("TECH_NEWS_OUTPUT_PATH", "public/index.html")
+                output_override or os.getenv("TECH_NEWS_OUTPUT_PATH", "web/public/news.json")
             ),
             gemini_api_key=os.getenv("GEMINI_API_KEY") or None,
             gemini_model=os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite"),
