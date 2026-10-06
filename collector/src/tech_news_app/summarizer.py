@@ -43,7 +43,7 @@ class Summarizer:
         )
         payload = {
             "contents": [{"parts": [{"text": prompt}]}],
-            "generationConfig": {"temperature": 0.2, "maxOutputTokens": 300},
+            "generationConfig": {"temperature": 0.2, "maxOutputTokens": 1024},
         }
         last_error: Exception | None = None
         for attempt in range(3):

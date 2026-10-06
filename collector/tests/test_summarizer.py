@@ -8,7 +8,7 @@ def test_fallback_summary_does_not_include_long_english_body(tmp_path) -> None:
         db_path=tmp_path / "news.sqlite",
         output_path=tmp_path / "index.html",
         gemini_api_key=None,
-        gemini_model="gemini-2.5-flash-lite",
+        gemini_model="gemini-3.5-flash-lite",
         gemini_min_interval_seconds=0,
     )
     item = FetchedItem(

@@ -45,7 +45,7 @@ jobs:
       - name: Fetch news and render site
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          GEMINI_MODEL: gemini-2.5-flash-lite
+          GEMINI_MODEL: gemini-3.5-flash-lite
         run: uv run --project collector python -m tech_news_app.main
 
       - name: Persist SQLite database

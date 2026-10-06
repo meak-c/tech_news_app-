@@ -58,14 +58,14 @@ Geminiを使用しない場合でも動作します。APIキーがない場合�
 推奨モデル:
 
 ```text
-gemini-2.5-flash-lite
+gemini-3.5-flash-lite
 ```
 
 ローカルでは環境変数に設定します。
 
 ```bash
 export GEMINI_API_KEY="実際のAPIキー"
-export GEMINI_MODEL="gemini-2.5-flash-lite"
+export GEMINI_MODEL="gemini-3.5-flash-lite"
 export GEMINI_MIN_INTERVAL_SECONDS="4.1"
 uv run --project collector python -m tech_news_app.main
 ```

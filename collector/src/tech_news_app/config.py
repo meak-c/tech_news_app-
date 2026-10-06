@@ -33,7 +33,7 @@ class Settings:
                 output_override or os.getenv("TECH_NEWS_OUTPUT_PATH", "public/index.html")
             ),
             gemini_api_key=os.getenv("GEMINI_API_KEY") or None,
-            gemini_model=os.getenv("GEMINI_MODEL", "gemini-2.5-flash-lite"),
+            gemini_model=os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite"),
             gemini_min_interval_seconds=float(
                 os.getenv("GEMINI_MIN_INTERVAL_SECONDS", "4.1")
             ),

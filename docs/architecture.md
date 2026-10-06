@@ -77,7 +77,7 @@ Pythonアプリは `collector/src/tech_news_app/fetchers.py` と `parser.py` を
 使用モデルは環境変数で指定します。
 
 ```text
-GEMINI_MODEL=gemini-2.5-flash-lite
+GEMINI_MODEL=gemini-3.5-flash-lite
 ```
 
 無料枠のレート制限を避けるため、呼び出し間隔は以下で制御します。
