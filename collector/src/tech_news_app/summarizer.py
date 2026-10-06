@@ -8,6 +8,17 @@ from .config import Settings
 from .models import FetchedItem
 from .parser import normalize_text
 
+FALLBACK_SUMMARY = "要約未生成。公式ページで確認してください。"
+# 過去バージョンで保存された簡易要約。これを含む要約も再要約の対象にする。
+LEGACY_FALLBACK_MARKERS = ("自動要約ではありません。",)
+
+
+def needs_resummary(summary: str) -> bool:
+    """保存済み要約がフォールバック(未要約)扱いかどうかを返す。"""
+    if not summary or summary == FALLBACK_SUMMARY:
+        return True
+    return any(marker in summary for marker in LEGACY_FALLBACK_MARKERS)
+
 
 class Summarizer:
     def __init__(self, settings: Settings, use_llm: bool = True) -> None:
@@ -24,7 +35,7 @@ class Summarizer:
             return self.fallback(item)
 
     def fallback(self, item: FetchedItem) -> str:
-        return "要約未生成。公式ページで確認してください。"
+        return FALLBACK_SUMMARY
 
     def _gemini(self, item: FetchedItem) -> str:
         endpoint = (

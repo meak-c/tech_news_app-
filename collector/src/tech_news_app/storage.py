@@ -179,6 +179,13 @@ class NewsStorage:
         ).fetchall()
         return [self._row_to_item(row) for row in rows]
 
+    def update_summary(self, news_id: int, summary_ja: str) -> None:
+        self.connection.execute(
+            "UPDATE news SET summary_ja = ?, updated_at = ? WHERE id = ?",
+            (summary_ja, utc_now().isoformat(), news_id),
+        )
+        self.connection.commit()
+
     def add_run_log(self, log: RunLog) -> None:
         self.connection.execute(
             """

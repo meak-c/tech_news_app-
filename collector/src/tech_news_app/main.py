@@ -2,14 +2,18 @@ from __future__ import annotations
 
 import argparse
 import json
+from collections.abc import Collection
 from datetime import UTC, datetime
 
 from .config import Settings
 from .fetchers import NewsFetcher
-from .models import RunLog
+from .models import FetchedItem, NewsItem, RunLog
 from .renderer import write_site
 from .storage import NewsStorage
-from .summarizer import Summarizer
+from .summarizer import Summarizer, needs_resummary
+
+# 取得対象外になった過去記事の再要約は、無料枠を考慮して1回の実行あたりの件数を制限する。
+BACKFILL_LIMIT = 50
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -22,6 +26,43 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--output", help="Override the generated HTML path.")
     return parser
+
+
+def _to_fetched(item: NewsItem) -> FetchedItem:
+    return FetchedItem(
+        product=item.product,
+        source_name=item.source_name,
+        source_url=item.source_url,
+        item_url=item.item_url,
+        title=item.title,
+        published_at=item.published_at,
+        raw_text=item.raw_text,
+    )
+
+
+def backfill_summaries(
+    storage: NewsStorage,
+    summarizer: Summarizer,
+    skip_ids: Collection[int | None] = (),
+    limit: int = BACKFILL_LIMIT,
+) -> int:
+    """未要約のまま保存されている記事を新しい順に再要約し、成功件数を返す。"""
+    if not summarizer.use_llm:
+        return 0
+    targets = [
+        item
+        for item in storage.all_news()
+        if item.id not in skip_ids and needs_resummary(item.summary_ja)
+    ][:limit]
+    updated = 0
+    for item in targets:
+        summary = summarizer.summarize(_to_fetched(item))
+        if needs_resummary(summary):
+            # API障害やレート制限の可能性が高いため、以降の呼び出しは次回実行に回す。
+            break
+        storage.update_summary(item.id, summary)
+        updated += 1
+    return updated
 
 
 def run(no_llm: bool = False, dry_run: bool = False, output: str | None = None) -> int:
@@ -50,17 +91,17 @@ def run(no_llm: bool = False, dry_run: bool = False, output: str | None = None) 
         new_count = 0
         for fetched in fetched_items:
             previous = existing.get(fetched.item_url)
-            should_refresh_fallback = (
-                previous is not None
-                and "自動要約ではありません。" in previous.summary_ja
-            )
-            if previous is not None and not should_refresh_fallback:
+            if previous is not None and not needs_resummary(previous.summary_ja):
                 summary = previous.summary_ja
             else:
                 summary = summarizer.summarize(fetched)
             saved, is_new = storage.save_item(fetched, summary)
             saved_items.append(saved)
             new_count += int(is_new)
+
+        backfilled = backfill_summaries(
+            storage, summarizer, skip_ids={item.id for item in saved_items}
+        )
 
         latest = storage.all_news()
         new_ids = {item.id for item in saved_items if item.is_new}
@@ -85,7 +126,7 @@ def run(no_llm: bool = False, dry_run: bool = False, output: str | None = None) 
     write_site(settings.output_path, latest, errors, run_at, new_count)
     print(
         f"Generated {settings.output_path} with {new_count} new item(s); "
-        f"{len(errors)} source error(s)."
+        f"{backfilled} backfilled summary(ies); {len(errors)} source error(s)."
     )
     return 0 if fetched_items or latest else 1
 
