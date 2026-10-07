@@ -10,11 +10,13 @@ import {
   matches,
   monthsOf,
   parseSummary,
+  sortByDate,
 } from "./news";
 
 function item(overrides: Partial<NewsItem> = {}): NewsItem {
   return {
     id: 1,
+    date: "2026-10-06",
     product: "Codex",
     title: "Release",
     summary_ja: "・何が変わったか: 新機能\n・影響: 速くなる\n・注意点: 特になし",
@@ -53,15 +55,13 @@ describe("matches", () => {
 describe("initialItems", () => {
   it("新着があれば新着と high 上位を表示する", () => {
     const fresh = item({ is_new: true });
-    const high = item({ importance: "high", published_at: "2026-09-01T00:00:00+00:00" });
-    const old = item({ published_at: "2026-08-01T00:00:00+00:00" });
+    const high = item({ importance: "high", date: "2026-09-01" });
+    const old = item({ date: "2026-08-01" });
     expect(initialItems([old, high, fresh], ["Codex"])).toEqual([fresh, high]);
   });
 
   it("新着がなければ各プロダクト最新3件を表示する", () => {
-    const codex = [1, 2, 3, 4].map((day) =>
-      item({ published_at: `2026-10-0${day}T00:00:00+00:00` }),
-    );
+    const codex = [1, 2, 3, 4].map((day) => item({ date: `2026-10-0${day}` }));
     const claude = item({ product: "Claude" });
     const result = initialItems([...codex, claude], ["Codex", "Claude"]);
     expect(result).toHaveLength(4);
@@ -97,10 +97,10 @@ describe("groupByDay / monthsOf", () => {
     const now = new Date("2026-10-07T00:30:00+09:00");
     const groups = groupByDay(
       [
-        item({ published_at: "2026-10-06T16:00:00+00:00" }),
-        item({ published_at: "2026-10-06T00:00:00+00:00" }),
-        item({ published_at: "2025-12-31T00:00:00+00:00" }),
-        item({ published_at: null }),
+        item({ date: "2026-10-07" }),
+        item({ date: "2026-10-06" }),
+        item({ date: "2025-12-31" }),
+        item({ date: "" }),
       ],
       now,
     );
@@ -119,5 +119,14 @@ describe("groupByDay / monthsOf", () => {
       item({ month: "2026-10" }),
     ]);
     expect(months).toEqual(["2026-10", "2026-09"]);
+  });
+});
+
+describe("sortByDate", () => {
+  it("表示日の新しい順に並べ、同じ日は公開日時の新しい順にする", () => {
+    const a = item({ date: "2026-10-07", published_at: "2026-10-06T00:00:00+00:00" });
+    const b = item({ date: "2026-10-07", published_at: "2026-10-05T00:00:00+00:00" });
+    const c = item({ date: "2026-10-05", published_at: "2026-10-09T00:00:00+00:00" });
+    expect(sortByDate([c, b, a])).toEqual([a, b, c]);
   });
 });

@@ -119,6 +119,12 @@ GitHub-hosted runnerは実行ごとに破棄されるため、SQLiteをrunner内
 
 `collector/src/tech_news_app/exporter.py` がDBの全ニュースを `web/public/news.json` へ出力します。news.jsonには記事一覧のほか、生成日時、新着件数、プロダクト一覧、取得エラーを含めます。
 
+画面に表示する日付は、リリースノート記載の日付(ベンダー現地の日付)ではなく、日本(JST)で見える日付です。`exporter.py` の `display_date()` が `date`(と、それに合わせた `month`)として出力します。
+
+- 公開日が日付のみの記事: このアプリが最初に取得した日(JST)を使います。米国で10/6に出たリリースは、日本時間10/7 03:07の実行で初めて見えるため10/7になります。
+- ただし初回取得が公開日から3日を超えて遅れた記事(初回の取り込み分など)は、公開日をそのまま使います。
+- 公開日が実時刻つきの記事(GitHub Releases): JSTに変換した日付を使います。
+
 画面は `web/`(Vite + React + TypeScript)です。`npm run build` で `web/public/news.json` を含む静的ファイルを `web/dist/` へ出力します。
 
 - `src/App.tsx`: news.jsonの読み込み、フィルタ状態、初期表示(Highlights)と「さらに表示」の制御

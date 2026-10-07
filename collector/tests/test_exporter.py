@@ -1,8 +1,8 @@
 import json
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 
 from tech_news_app.config import PRODUCTS
-from tech_news_app.exporter import render_news_json, write_news_json
+from tech_news_app.exporter import display_date, render_news_json, write_news_json
 from tech_news_app.models import Importance, NewsItem, SourceError
 
 
@@ -57,3 +57,43 @@ def test_write_news_json_creates_parent_dirs(tmp_path) -> None:
     output = tmp_path / "web" / "public" / "news.json"
     write_news_json(output, [make_news()], [], datetime(2026, 6, 23, tzinfo=UTC), 0)
     assert json.loads(output.read_text(encoding="utf-8"))["items"][0]["title"] == "Release title"
+
+
+def news_at(published: datetime | None, first_seen: datetime) -> NewsItem:
+    return make_news().model_copy(update={"published_at": published, "first_seen_at": first_seen})
+
+
+def test_display_date_uses_first_seen_jst_for_date_only_release() -> None:
+    # 米国の10/6リリース。日本では10/7 03:07 の定期実行で初めて見える。
+    item = news_at(
+        datetime(2026, 10, 6, tzinfo=UTC), datetime(2026, 10, 6, 18, 7, tzinfo=UTC)
+    )
+    assert display_date(item) == date(2026, 10, 7)
+
+
+def test_display_date_keeps_published_date_for_initial_import() -> None:
+    item = news_at(
+        datetime(2026, 7, 1, tzinfo=UTC), datetime(2026, 10, 6, 18, 7, tzinfo=UTC)
+    )
+    assert display_date(item) == date(2026, 7, 1)
+
+
+def test_display_date_converts_precise_timestamp_to_jst() -> None:
+    item = news_at(
+        datetime(2026, 10, 6, 20, 0, tzinfo=UTC), datetime(2026, 10, 6, 21, 0, tzinfo=UTC)
+    )
+    assert display_date(item) == date(2026, 10, 7)
+
+
+def test_display_date_falls_back_to_first_seen_without_published_date() -> None:
+    item = news_at(None, datetime(2026, 10, 6, 18, 7, tzinfo=UTC))
+    assert display_date(item) == date(2026, 10, 7)
+
+
+def test_news_json_exposes_display_date_and_month() -> None:
+    item = news_at(
+        datetime(2026, 9, 30, tzinfo=UTC), datetime(2026, 9, 30, 18, 7, tzinfo=UTC)
+    )
+    payload = json.loads(render_news_json([item], [], datetime(2026, 10, 1, tzinfo=UTC), 0))
+    assert payload["items"][0]["date"] == "2026-10-01"
+    assert payload["items"][0]["month"] == "2026-10"

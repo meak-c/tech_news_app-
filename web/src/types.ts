@@ -3,6 +3,8 @@ export type Importance = "high" | "medium" | "low";
 /** collector(Python)が出力する news.json の1記事。 */
 export interface NewsItem {
   id: number | null;
+  /** 画面に表示する日付(JST, YYYY-MM-DD)。ベンダー現地の公開日ではなく日本で見える日。 */
+  date: string;
   product: string;
   title: string;
   summary_ja: string;

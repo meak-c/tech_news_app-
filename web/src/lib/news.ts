@@ -37,8 +37,14 @@ export function itemTime(item: NewsItem): number {
   return Date.parse(item.published_at ?? item.fetched_at) || 0;
 }
 
+/** 表示日(JST)の新しい順。同じ日の中は公開日時、取得順の新しい順。 */
 export function sortByDate(items: NewsItem[]): NewsItem[] {
-  return [...items].sort((a, b) => itemTime(b) - itemTime(a));
+  return [...items].sort(
+    (a, b) =>
+      b.date.localeCompare(a.date) ||
+      itemTime(b) - itemTime(a) ||
+      (b.id ?? 0) - (a.id ?? 0),
+  );
 }
 
 /**
@@ -136,7 +142,7 @@ export function groupByDay(items: NewsItem[], now: Date = new Date()): DayGroup[
   const todayKey = jstDateKey(now);
   const groups: DayGroup[] = [];
   for (const item of items) {
-    const key = item.published_at ? jstDateKey(item.published_at) : "unknown";
+    const key = item.date || "unknown";
     let group = groups.at(-1);
     if (!group || group.key !== key) {
       group = {
