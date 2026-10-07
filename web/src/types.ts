@@ -1,5 +1,3 @@
-export type Importance = "high" | "medium" | "low";
-
 /** collector(Python)が出力する news.json の1記事。 */
 export interface NewsItem {
   id: number | null;
@@ -12,7 +10,6 @@ export interface NewsItem {
   fetched_at: string;
   source_name: string;
   item_url: string;
-  importance: Importance;
   is_new: boolean;
   month: string;
 }
@@ -33,6 +30,5 @@ export interface NewsPayload {
 export interface Filters {
   product: string;
   month: string;
-  importance: "all" | Importance;
   search: string;
 }

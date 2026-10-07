@@ -57,7 +57,6 @@ def render_news_json(
                 "fetched_at": item.fetched_at.isoformat(),
                 "source_name": item.source_name,
                 "item_url": item.item_url,
-                "importance": item.importance.value,
                 "is_new": item.is_new,
                 "month": display_date(item).strftime("%Y-%m"),
             }

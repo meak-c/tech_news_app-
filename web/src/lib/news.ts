@@ -2,7 +2,7 @@ import type { Filters, NewsItem } from "../types";
 
 export const ALL = "all";
 export const FALLBACK_SUMMARY = "要約未生成。公式ページで確認してください。";
-export const EMPTY_FILTERS: Filters = { product: ALL, month: ALL, importance: ALL, search: "" };
+export const EMPTY_FILTERS: Filters = { product: ALL, month: ALL, search: "" };
 
 const JST_DATE = new Intl.DateTimeFormat("en-CA", {
   timeZone: "Asia/Tokyo",
@@ -16,7 +16,6 @@ export function filtersActive(filters: Filters): boolean {
   return (
     filters.product !== ALL ||
     filters.month !== ALL ||
-    filters.importance !== ALL ||
     filters.search.trim() !== ""
   );
 }
@@ -24,7 +23,6 @@ export function filtersActive(filters: Filters): boolean {
 export function matches(item: NewsItem, filters: Filters): boolean {
   if (filters.product !== ALL && item.product !== filters.product) return false;
   if (filters.month !== ALL && item.month !== filters.month) return false;
-  if (filters.importance !== ALL && item.importance !== filters.importance) return false;
   const terms = filters.search.toLowerCase().split(/\s+/).filter(Boolean);
   if (terms.length) {
     const haystack = `${item.title} ${item.summary_ja} ${item.source_name}`.toLowerCase();
@@ -49,7 +47,7 @@ export function sortByDate(items: NewsItem[]): NewsItem[] {
 
 /**
  * フィルタ未指定時の初期表示。
- * 新着があれば新着全件、なければ各プロダクトの最新3件。加えて high の最新10件を出す。
+ * 新着があれば新着全件、なければ各プロダクトの最新3件。
  */
 export function initialItems(items: NewsItem[], products: string[]): NewsItem[] {
   const sorted = sortByDate(items);
@@ -64,10 +62,6 @@ export function initialItems(items: NewsItem[], products: string[]): NewsItem[] 
       sorted.filter((item) => item.product === product).slice(0, 3).forEach(add);
     }
   }
-  sorted
-    .filter((item) => item.importance === "high")
-    .slice(0, 10)
-    .forEach(add);
   return sortByDate([...selected.values()]);
 }
 

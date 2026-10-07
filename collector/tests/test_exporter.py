@@ -45,7 +45,6 @@ def test_news_json_contains_required_fields() -> None:
         "fetched_at",
         "source_name",
         "item_url",
-        "importance",
         "is_new",
         "month",
     }:

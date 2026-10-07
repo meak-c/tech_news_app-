@@ -13,12 +13,9 @@
   --text-3: #6d7284;
   --accent: #7cf0d8;
   --accent-2: #8a7bff;
-  --high: #ff6b6b;
-  --high-bg: rgba(255, 107, 107, 0.12);
-  --mid: #f5c26b;
-  --mid-bg: rgba(245, 194, 107, 0.1);
-  --low: #8b90a0;
-  --low-bg: rgba(139, 144, 160, 0.1);
+  --warn: #f5c26b;
+  --warn-bg: rgba(245, 194, 107, 0.1);
+  --danger: #ff6b6b;
   --shadow: 0 20px 50px -24px rgba(0, 0, 0, 0.8);
   --radius: 18px;
   --font-sans: "Noto Sans JP", system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -43,12 +40,9 @@
     --text-3: #868b9c;
     --accent: #0f9f88;
     --accent-2: #5b4ce0;
-    --high: #d93f3f;
-    --high-bg: rgba(217, 63, 63, 0.09);
-    --mid: #a8720d;
-    --mid-bg: rgba(168, 114, 13, 0.09);
-    --low: #6b7083;
-    --low-bg: rgba(107, 112, 131, 0.09);
+    --warn: #a8720d;
+    --warn-bg: rgba(168, 114, 13, 0.09);
+    --danger: #d93f3f;
     --shadow: 0 18px 40px -26px rgba(20, 24, 40, 0.35);
     color-scheme: light;
   }
@@ -242,10 +236,10 @@ button {
 
 .alert {
   margin-top: 12px;
-  border: 1px solid color-mix(in srgb, var(--mid) 35%, transparent);
+  border: 1px solid color-mix(in srgb, var(--warn) 35%, transparent);
   border-radius: 14px;
-  background: var(--mid-bg);
-  color: var(--mid);
+  background: var(--warn-bg);
+  color: var(--warn);
   font-size: 0.85rem;
 }
 
@@ -293,7 +287,14 @@ button {
   box-shadow: 0 12px 24px -20px rgba(0, 0, 0, 0.6);
 }
 
+.filter-top {
+  display: flex;
+  gap: 8px;
+}
+
 .search {
+  flex: 1;
+  min-width: 0;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -398,55 +399,15 @@ button {
   font-size: 0.7rem;
 }
 
-.filter-row {
+.month {
   display: flex;
-  gap: 8px;
-}
-
-.segmented {
-  display: flex;
-  flex: 1;
-  padding: 3px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--surface-2);
-}
-
-.segmented button {
-  flex: 1;
-  padding: 4px 0;
-  border: 0;
-  border-radius: 7px;
-  background: none;
-  color: var(--text-3);
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  transition:
-    background 150ms,
-    color 150ms;
-}
-
-.segmented button.is-active {
-  background: var(--surface-hover);
-  color: var(--text);
-  box-shadow: inset 0 0 0 1px var(--border-strong);
-}
-
-.segmented button.is-active[data-importance="high"] {
-  color: var(--high);
-}
-
-.segmented button.is-active[data-importance="medium"] {
-  color: var(--mid);
 }
 
 .month select {
   height: 100%;
   padding: 0 28px 0 12px;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: 12px;
   background:
     var(--surface-2)
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M3 4.5 6 7.5 9 4.5' fill='none' stroke='%23888' stroke-width='1.5'/%3E%3C/svg%3E")
@@ -586,27 +547,6 @@ button {
   height: 6px;
   border-radius: 50%;
   background: var(--product);
-}
-
-.importance {
-  padding: 1px 7px;
-  border-radius: 6px;
-  text-transform: uppercase;
-}
-
-.importance-high {
-  background: var(--high-bg);
-  color: var(--high);
-}
-
-.importance-medium {
-  background: var(--mid-bg);
-  color: var(--mid);
-}
-
-.importance-low {
-  background: var(--low-bg);
-  color: var(--low);
 }
 
 .new-badge {
@@ -782,7 +722,7 @@ button {
 }
 
 .notice.is-error {
-  color: var(--high);
+  color: var(--danger);
 }
 
 .footer {

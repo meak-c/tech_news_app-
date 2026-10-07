@@ -7,8 +7,6 @@ interface Props {
   item: NewsItem;
 }
 
-const IMPORTANCE_LABEL = { high: "High", medium: "Mid", low: "Low" } as const;
-
 export function NewsCard({ item }: Props) {
   const [open, setOpen] = useState(false);
   const detailsId = useId();
@@ -19,7 +17,6 @@ export function NewsCard({ item }: Props) {
   return (
     <article
       className={`card${open ? " is-open" : ""}${item.is_new ? " is-new" : ""}`}
-      data-importance={item.importance}
       style={{ "--product": productColor(item.product) } as CSSProperties}
     >
       <button
@@ -33,9 +30,6 @@ export function NewsCard({ item }: Props) {
           <span className="product">
             <span className="product-dot" aria-hidden="true" />
             {item.product}
-          </span>
-          <span className={`importance importance-${item.importance}`}>
-            {IMPORTANCE_LABEL[item.importance]}
           </span>
           {item.is_new && <span className="new-badge">NEW</span>}
         </span>

@@ -24,7 +24,6 @@ function item(overrides: Partial<NewsItem> = {}): NewsItem {
     fetched_at: "2026-10-06T18:10:00+00:00",
     source_name: "Codex Changelog",
     item_url: `https://example.com/${Math.random()}`,
-    importance: "medium",
     is_new: false,
     month: "2026-10",
     ...overrides,
@@ -43,21 +42,19 @@ describe("matches", () => {
     expect(matches(target, { ...EMPTY_FILTERS, search: "gpt-5 存在しない" })).toBe(false);
   });
 
-  it("プロダクト・月・重要度で絞り込める", () => {
-    const target = item({ product: "Claude", importance: "high" });
+  it("プロダクト・月で絞り込める", () => {
+    const target = item({ product: "Claude" });
     expect(matches(target, { ...EMPTY_FILTERS, product: "Claude" })).toBe(true);
     expect(matches(target, { ...EMPTY_FILTERS, product: "Codex" })).toBe(false);
     expect(matches(target, { ...EMPTY_FILTERS, month: "2026-09" })).toBe(false);
-    expect(matches(target, { ...EMPTY_FILTERS, importance: "low" })).toBe(false);
   });
 });
 
 describe("initialItems", () => {
-  it("新着があれば新着と high 上位を表示する", () => {
+  it("新着があれば新着だけを表示する", () => {
     const fresh = item({ is_new: true });
-    const high = item({ importance: "high", date: "2026-09-01" });
     const old = item({ date: "2026-08-01" });
-    expect(initialItems([old, high, fresh], ["Codex"])).toEqual([fresh, high]);
+    expect(initialItems([old, fresh], ["Codex"])).toEqual([fresh]);
   });
 
   it("新着がなければ各プロダクト最新3件を表示する", () => {
