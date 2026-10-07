@@ -11,6 +11,7 @@ ChatGPT、ChatGPT Work、Claude、Claude Cowork、Claude Code、Codexの公式�
 | Claude Code | [Claude Code Changelog](https://code.claude.com/docs/en/changelog) |
 | Claude Code | [GitHub Releases](https://github.com/anthropics/claude-code/releases) |
 | Claude Cowork | [Claude Cowork Changelog](https://claude.com/docs/cowork/changelog) |
+| Claude Cowork | [Claude Help Center: Cowork](https://support.claude.com/en/collections/19667525-claude-cowork)(記事の更新を検知) |
 | Codex | [Codex Changelog](https://developers.openai.com/codex/changelog) |
 
 一般ニュースサイト、ブログ、SNSは取得しません。

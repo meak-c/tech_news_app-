@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import re
+from dataclasses import dataclass
 from datetime import UTC, datetime
 
 from bs4 import BeautifulSoup, Tag
@@ -255,3 +257,59 @@ def parse_codex_changelog(html: str, source: SourceConfig) -> list[FetchedItem]:
         if len(items) >= source.max_items:
             break
     return items
+
+
+@dataclass(frozen=True)
+class HelpArticle:
+    title: str
+    url: str
+    updated_at: datetime
+
+
+def _find_key(value: object, key: str) -> object | None:
+    """ネストしたJSONから最初に見つかった key の値を返す。"""
+    if isinstance(value, dict):
+        if key in value:
+            return value[key]
+        children = value.values()
+    elif isinstance(value, list):
+        children = value
+    else:
+        return None
+    for child in children:
+        found = _find_key(child, key)
+        if found is not None:
+            return found
+    return None
+
+
+def parse_helpcenter_collection(html: str) -> list[HelpArticle]:
+    """Intercom系ヘルプセンターのコレクションページから、記事一覧と最終更新日時を取り出す。"""
+    script = BeautifulSoup(html, "html.parser").select_one("script#__NEXT_DATA__")
+    if script is None or not script.string:
+        raise ValueError("Help center collection data (__NEXT_DATA__) not found")
+    summaries = _find_key(json.loads(script.string), "articleSummaries")
+    if not isinstance(summaries, list):
+        raise ValueError("Help center articleSummaries not found")
+    articles: list[HelpArticle] = []
+    for summary in summaries:
+        updated_at = parse_date(summary.get("lastUpdatedDate"))
+        if updated_at is None or not summary.get("url"):
+            continue
+        articles.append(
+            HelpArticle(
+                title=normalize_text(summary.get("title", "")),
+                url=summary["url"],
+                updated_at=updated_at,
+            )
+        )
+    return sorted(articles, key=lambda article: article.updated_at, reverse=True)
+
+
+def parse_helpcenter_article(html: str) -> str:
+    """ヘルプ記事ページの本文テキストを返す。"""
+    soup = BeautifulSoup(html, "html.parser")
+    body = soup.select_one("article") or soup.select_one("main")
+    if body is None:
+        raise ValueError("Help center article body not found")
+    return normalize_text(body.get_text(" ", strip=True))[:6000]

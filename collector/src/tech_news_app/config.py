@@ -13,6 +13,8 @@ class SourceConfig:
     fetch_url: str | None = None
     kind: str = "html"
     max_items: int = 12
+    # kind="helpcenter" のとき、この日数以内に更新された記事だけを対象にする
+    max_age_days: int | None = None
 
 
 @dataclass(frozen=True)
@@ -70,6 +72,14 @@ SOURCES = (
         source_name="Claude Cowork Changelog",
         url="https://claude.com/docs/cowork/changelog",
         kind="mintlify",
+    ),
+    SourceConfig(
+        product="Claude Cowork",
+        source_name="Claude Cowork Help Center",
+        url="https://support.claude.com/en/collections/19667525-claude-cowork",
+        kind="helpcenter",
+        max_items=20,
+        max_age_days=14,
     ),
     SourceConfig(
         product="Codex",

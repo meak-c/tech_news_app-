@@ -66,9 +66,18 @@ Pythonアプリは `collector/src/tech_news_app/fetchers.py` と `parser.py` を
 - Anthropic Docs: Claude Code Changelog
 - GitHub Releases: `anthropics/claude-code`
 - Anthropic: Claude Cowork Changelog(Claude Desktopのリリースノート)
+- Anthropic Support: Claude Cowork ヘルプセンター(記事の更新を検知)
 - OpenAI: Codex Changelog
 
 取得元ごとにHTML構造が違うため、パーサーはソース別に分けています。1つのソース取得に失敗しても、他のソースの取得とサイト生成は継続します。
+
+#### ヘルプセンター記事の更新検知
+
+Coworkの方針変更(例: 2026-10-06のPro/Maxのクラウド実行化)は、リリースノートではなくヘルプセンター記事だけに記載されました。そこで `kind="helpcenter"` の取得元は、コレクションページに埋め込まれた記事ごとの最終更新日時(`lastUpdatedDate`)を見て、直近14日以内に更新された記事を取得します。
+
+- 記事の更新1回を1件のニュースとして扱います。`item_url` に更新日時を含める(`...#updated-20261006T191325Z`)ため、同じ更新は重複せず、再編集は新しい記事になります。
+- タイトルは `Help Center: <記事名>` です。要約は本文から「最近の変更点」を優先して生成します。
+- 変更前後の差分は取らないため、誤字修正などの軽微な更新もニュースになることがあります。
 
 #### ChatGPT Workの区分
 

@@ -1,8 +1,14 @@
+import json
+
+import pytest
+
 from tech_news_app.config import SourceConfig
 from tech_news_app.parser import (
     parse_claude_release_notes,
     parse_codex_changelog,
     parse_heading_document,
+    parse_helpcenter_article,
+    parse_helpcenter_collection,
     parse_mintlify_changelog,
 )
 
@@ -77,3 +83,50 @@ def test_codex_changelog_uses_time_and_prose_content() -> None:
     assert items[0].published_at.date().isoformat() == "2026-07-21"
     assert items[0].item_url.endswith("#github-release-1")
     assert "experimental feature" in items[0].raw_text
+
+
+def _collection_html() -> str:
+    data = {
+        "props": {
+            "pageProps": {
+                "collection": {
+                    "articleSummaries": [
+                        {
+                            "id": "1",
+                            "title": "Old article",
+                            "url": "https://support.example.com/en/articles/1-old",
+                            "lastUpdatedDate": "2026-08-01T00:00:00Z",
+                        },
+                        {
+                            "id": "2",
+                            "title": "New  article",
+                            "url": "https://support.example.com/en/articles/2-new",
+                            "lastUpdatedDate": "2026-10-06T19:13:25Z",
+                        },
+                        {"id": "3", "title": "No date", "url": "https://support.example.com/3"},
+                    ]
+                }
+            }
+        }
+    }
+    script = f'<script id="__NEXT_DATA__" type="application/json">{json.dumps(data)}</script>'
+    return f"<html>{script}</html>"
+
+
+def test_helpcenter_collection_lists_articles_newest_first() -> None:
+    articles = parse_helpcenter_collection(_collection_html())
+    assert [article.title for article in articles] == ["New article", "Old article"]
+    assert articles[0].updated_at.isoformat() == "2026-10-06T19:13:25+00:00"
+
+
+def test_helpcenter_collection_without_data_raises() -> None:
+    with pytest.raises(ValueError):
+        parse_helpcenter_collection("<html></html>")
+
+
+def test_helpcenter_article_returns_article_body_only() -> None:
+    html = (
+        "<main><nav>menu</nav>"
+        "<article><h1>T</h1><p>What changed  on October 6</p></article></main>"
+    )
+    assert parse_helpcenter_article(html) == "T What changed on October 6"
