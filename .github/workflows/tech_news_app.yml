@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       page-ready: ${{ steps.page.outputs.ready }}
     steps:
@@ -96,7 +96,7 @@ jobs:
   deploy:
     needs: build
     if: needs.build.outputs.page-ready == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
