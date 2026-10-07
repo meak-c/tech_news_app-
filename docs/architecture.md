@@ -70,6 +70,10 @@ Pythonアプリは `collector/src/tech_news_app/fetchers.py` と `parser.py` を
 
 取得元ごとにHTML構造が違うため、パーサーはソース別に分けています。1つのソース取得に失敗しても、他のソースの取得とサイト生成は継続します。
 
+#### ChatGPT Workの区分
+
+ChatGPT Workの更新はChatGPT Release Notesの中で配信されます。DBのproductは `ChatGPT` のまま、`exporter.py` の `display_product()` が、タイトルまたは本文冒頭300文字に製品名としての `Work` を含む記事を `ChatGPT Work` として出力します。
+
 ### 4. Gemini APIで日本語要約する
 
 `GEMINI_API_KEY` がGitHub ActionsのRepository Secretに設定されている場合、`collector/src/tech_news_app/summarizer.py` がGemini APIを呼び出して日本語要約を生成します。

@@ -1,12 +1,12 @@
 # Tech News Morning
 
-ChatGPT(ChatGPT Work含む)、Claude、Claude Cowork、Claude Code、Codexの公式更新情報だけを毎日収集し、日本語で要約した朝刊サイトを生成する個人用アプリです。GitHub ActionsでJST 03:07頃に実行し、GitHub Pagesへ公開します。
+ChatGPT、ChatGPT Work、Claude、Claude Cowork、Claude Code、Codexの公式更新情報だけを毎日収集し、日本語で要約した朝刊サイトを生成する個人用アプリです。GitHub ActionsでJST 03:07頃に実行し、GitHub Pagesへ公開します。
 
 ## 対象ソース
 
 | 製品 | 公式ソース |
 |---|---|
-| ChatGPT | [ChatGPT Release Notes](https://help.openai.com/en/articles/6825453-chatgpt-release-notes) |
+| ChatGPT / ChatGPT Work | [ChatGPT Release Notes](https://help.openai.com/en/articles/6825453-chatgpt-release-notes)(Workの記事は表示時に別プロダクトへ区分) |
 | Claude | [Claude Release Notes](https://support.claude.com/en/articles/12138966-release-notes) |
 | Claude Code | [Claude Code Changelog](https://code.claude.com/docs/en/changelog) |
 | Claude Code | [GitHub Releases](https://github.com/anthropics/claude-code/releases) |

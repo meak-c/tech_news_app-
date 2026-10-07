@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from datetime import UTC, date, datetime, time
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -13,6 +14,21 @@ JST = ZoneInfo("Asia/Tokyo")
 # 公開日が日付のみの記事で、初回取得が公開日からこの日数以内なら取得日(JST)を表示日にする。
 # 超える場合は初回取り込みなどで取得日に意味がないため、公開日をそのまま使う。
 MAX_DETECTION_LAG_DAYS = 3
+
+# ChatGPT Work は ChatGPT Release Notes の中で配信されるため、出力時に別プロダクトとして区分する。
+# 製品名としての "Work"(大文字・単独)をタイトルまたは本文冒頭に含む記事が対象。
+# "Work with Apps" のような別の用法は除外する。
+WORK_PATTERN = re.compile(r"(?<![A-Za-z])Work(?![A-Za-z]|\s+(?:with|on|from|in progress))")
+WORK_BODY_CHARS = 300
+
+
+def display_product(item: NewsItem) -> str:
+    """画面に表示するプロダクト名を返す(DBの product は変更しない)。"""
+    if item.product == "ChatGPT" and (
+        WORK_PATTERN.search(item.title) or WORK_PATTERN.search(item.raw_text[:WORK_BODY_CHARS])
+    ):
+        return "ChatGPT Work"
+    return item.product
 
 
 def display_date(item: NewsItem) -> date | None:
@@ -54,7 +70,7 @@ def render_news_json(
             {
                 "id": item.id,
                 "date": display_date(item).isoformat(),
-                "product": item.product,
+                "product": display_product(item),
                 "title": item.title,
                 "summary_ja": item.summary_ja or FALLBACK_SUMMARY,
                 "published_at": item.published_at.isoformat() if item.published_at else None,

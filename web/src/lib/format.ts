@@ -46,6 +46,7 @@ export function heroDate(value: string | null | undefined): Record<string, strin
 /** プロダクトごとのアクセント色。未知のプロダクトは名前から色相を決める。 */
 const PRODUCT_COLORS: Record<string, string> = {
   ChatGPT: "#19c37d",
+  "ChatGPT Work": "#c6e03c",
   Claude: "#e8825a",
   "Claude Cowork": "#f0b429",
   "Claude Code": "#b48cff",

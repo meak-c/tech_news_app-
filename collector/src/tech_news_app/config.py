@@ -79,4 +79,4 @@ SOURCES = (
     ),
 )
 
-PRODUCTS = ("ChatGPT", "Claude", "Claude Cowork", "Claude Code", "Codex")
+PRODUCTS = ("ChatGPT", "ChatGPT Work", "Claude", "Claude Cowork", "Claude Code", "Codex")

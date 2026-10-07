@@ -2,7 +2,12 @@ import json
 from datetime import UTC, date, datetime
 
 from tech_news_app.config import PRODUCTS
-from tech_news_app.exporter import display_date, render_news_json, write_news_json
+from tech_news_app.exporter import (
+    display_date,
+    display_product,
+    render_news_json,
+    write_news_json,
+)
 from tech_news_app.models import Importance, NewsItem, SourceError
 
 
@@ -105,3 +110,22 @@ def test_news_json_excludes_importance_and_removed_products() -> None:
     )
     assert [item["product"] for item in payload["items"]] == ["ChatGPT"]
     assert "importance" not in payload["items"][0]
+
+
+def test_display_product_splits_chatgpt_work_by_title_or_body_prefix() -> None:
+    def chatgpt(title: str, raw_text: str = "", product: str = "ChatGPT") -> NewsItem:
+        return make_news().model_copy(
+            update={"title": title, "raw_text": raw_text, "product": product}
+        )
+
+    assert display_product(chatgpt("GPT-6 Sol and Luna in Work and Codex")) == "ChatGPT Work"
+    assert display_product(chatgpt("Introducing ChatGPT Work")) == "ChatGPT Work"
+    assert (
+        display_product(chatgpt("Use website tools", "ChatGPT Work and Codex can now use tools"))
+        == "ChatGPT Work"
+    )
+    assert display_product(chatgpt("Organize your work in ChatGPT Space")) == "ChatGPT"
+    assert display_product(chatgpt("Work with Apps on macOS")) == "ChatGPT"
+    assert display_product(chatgpt("Update", "x" * 400 + " Work item")) == "ChatGPT"
+    # 他プロダクト(Codex等)は題名に Work を含んでも変更しない
+    assert display_product(chatgpt("GPT-6 in Codex and ChatGPT Work", product="Codex")) == "Codex"
