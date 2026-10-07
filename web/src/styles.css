@@ -56,11 +56,13 @@
 
 html {
   -webkit-text-size-adjust: 100%;
+  overflow-x: hidden;
 }
 
 body {
   margin: 0;
   min-height: 100vh;
+  overflow-x: clip;
   background-color: var(--bg);
   background-image:
     radial-gradient(60rem 30rem at 10% -10%, var(--bg-glow-1), transparent 60%),
@@ -197,7 +199,7 @@ button {
 
 .stats {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
   margin: 20px 0 0;
 }
@@ -255,6 +257,7 @@ button {
 
 .alert ul {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 6px;
   margin: 0;
   padding: 0 14px 12px;
@@ -263,6 +266,7 @@ button {
 
 .alert li {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   color: var(--text-2);
   font-size: 0.8rem;
   overflow-wrap: anywhere;
@@ -279,6 +283,7 @@ button {
   top: 0;
   z-index: 10;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 8px;
   margin: 0 -16px;
   padding: 10px 16px;
@@ -473,6 +478,7 @@ button {
 
 .day-items {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 10px;
 }
 
@@ -516,6 +522,7 @@ button {
 .card-head {
   position: relative;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 6px;
   width: 100%;
   padding: 14px 44px 14px 18px;
@@ -615,12 +622,14 @@ button {
 
 .summary {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 8px;
   margin: 0;
 }
 
 .summary div {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 2px;
   padding: 10px 12px;
   border-radius: 12px;
@@ -693,6 +702,7 @@ button {
 
 .more {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   justify-items: center;
   width: 100%;
   margin-top: 22px;
