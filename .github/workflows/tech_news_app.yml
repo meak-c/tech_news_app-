@@ -23,6 +23,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
         with:
+          # concurrency で待たされた run でも、先行 run が push した DB を含む最新を取得する
+          ref: ${{ github.ref_name }}
           fetch-depth: 0
 
       - name: Set up Python
