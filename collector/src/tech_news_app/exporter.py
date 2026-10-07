@@ -40,7 +40,11 @@ def render_news_json(
     run_at: datetime,
     new_count: int,
 ) -> str:
-    """Webフロントエンド(web/)が読み込む news.json の内容を生成する。"""
+    """Webフロントエンド(web/)が読み込む news.json の内容を生成する。
+
+    取得元から外した製品(PRODUCTSにないもの)の記事はDBに残っていても出力しない。
+    """
+    items = [item for item in items if item.product in PRODUCTS]
     payload = {
         "generated_at": run_at.astimezone(JST).isoformat(),
         "new_count": new_count,

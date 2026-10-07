@@ -10,12 +10,11 @@ from .config import SOURCES, Settings, SourceConfig
 from .models import FetchedItem, SourceError
 from .parser import (
     normalize_text,
-    parse_claude_code_changelog,
     parse_claude_release_notes,
     parse_codex_changelog,
     parse_date,
-    parse_gemini_release_notes,
     parse_heading_document,
+    parse_mintlify_changelog,
 )
 
 
@@ -50,10 +49,8 @@ class NewsFetcher:
             return self._parse_atom(response.content, source)
         if source.kind == "claude":
             return parse_claude_release_notes(html, source)
-        if source.kind == "claude_code":
-            return parse_claude_code_changelog(html, source)
-        if source.kind == "gemini":
-            return parse_gemini_release_notes(html, source)
+        if source.kind == "mintlify":
+            return parse_mintlify_changelog(html, source)
         if source.kind == "codex":
             return parse_codex_changelog(html, source)
         return parse_heading_document(html, source)

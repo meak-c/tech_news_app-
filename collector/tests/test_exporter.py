@@ -96,3 +96,12 @@ def test_news_json_exposes_display_date_and_month() -> None:
     payload = json.loads(render_news_json([item], [], datetime(2026, 10, 1, tzinfo=UTC), 0))
     assert payload["items"][0]["date"] == "2026-10-01"
     assert payload["items"][0]["month"] == "2026-10"
+
+
+def test_news_json_excludes_importance_and_removed_products() -> None:
+    removed = make_news().model_copy(update={"id": 2, "product": "Gemini"})
+    payload = json.loads(
+        render_news_json([make_news(), removed], [], datetime(2026, 6, 23, tzinfo=UTC), 0)
+    )
+    assert [item["product"] for item in payload["items"]] == ["ChatGPT"]
+    assert "importance" not in payload["items"][0]

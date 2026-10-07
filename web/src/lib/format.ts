@@ -47,9 +47,9 @@ export function heroDate(value: string | null | undefined): Record<string, strin
 const PRODUCT_COLORS: Record<string, string> = {
   ChatGPT: "#19c37d",
   Claude: "#e8825a",
+  "Claude Cowork": "#f0b429",
   "Claude Code": "#b48cff",
   Codex: "#38bdf8",
-  Gemini: "#6c8cff",
 };
 
 export function productColor(product: string): string {

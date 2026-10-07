@@ -1,10 +1,9 @@
 from tech_news_app.config import SourceConfig
 from tech_news_app.parser import (
-    parse_claude_code_changelog,
     parse_claude_release_notes,
     parse_codex_changelog,
-    parse_gemini_release_notes,
     parse_heading_document,
+    parse_mintlify_changelog,
 )
 
 
@@ -46,7 +45,7 @@ def test_claude_release_notes_uses_date_sections() -> None:
     assert items[0].title == "Claude added a new feature."
 
 
-def test_claude_code_changelog_uses_update_blocks() -> None:
+def test_mintlify_changelog_uses_update_blocks() -> None:
     html = """
     <div class="update-container" id="2-1-1">
       <div data-component-part="update-label">2.1.1</div>
@@ -54,30 +53,10 @@ def test_claude_code_changelog_uses_update_blocks() -> None:
       <div class="prose"><p>Fixed a CLI issue.</p></div>
     </div>
     """
-    items = parse_claude_code_changelog(html, source("Claude Code"))
+    items = parse_mintlify_changelog(html, source("Claude Code"))
     assert len(items) == 1
     assert items[0].title == "v2.1.1"
     assert items[0].item_url.endswith("#2-1-1")
-
-
-def test_gemini_release_notes_uses_h2_date_and_h3_items() -> None:
-    html = """
-    <article>
-      <h1>リリースノート</h1>
-      <h2>2026.07.21</h2>
-      <h3>3.6 Flash: アップグレード版モデル</h3>
-      <ul><li>更新内容: 新しいモデルが利用可能になりました。</li></ul>
-      <h2>2026.06.30</h2>
-      <h3>Gemini Spark is your 24/7 personal AI agent.</h3>
-      <ul><li>更新内容: 新しいエージェント機能です。</li></ul>
-    </article>
-    """
-    items = parse_gemini_release_notes(html, source("Gemini"))
-    assert len(items) == 2
-    assert items[0].title == "3.6 Flash: アップグレード版モデル"
-    assert items[0].published_at.date().isoformat() == "2026-07-21"
-    assert "新しいモデル" in items[0].raw_text
-    assert items[1].published_at.date().isoformat() == "2026-06-30"
 
 
 def test_codex_changelog_uses_time_and_prose_content() -> None:

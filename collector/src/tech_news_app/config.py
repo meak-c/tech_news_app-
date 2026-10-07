@@ -57,7 +57,7 @@ SOURCES = (
         product="Claude Code",
         source_name="Claude Code Changelog",
         url="https://code.claude.com/docs/en/changelog",
-        kind="claude_code",
+        kind="mintlify",
     ),
     SourceConfig(
         product="Claude Code",
@@ -66,10 +66,10 @@ SOURCES = (
         kind="atom",
     ),
     SourceConfig(
-        product="Gemini",
-        source_name="Gemini Release Notes",
-        url="https://gemini.google/release-notes/",
-        kind="gemini",
+        product="Claude Cowork",
+        source_name="Claude Cowork Changelog",
+        url="https://claude.com/docs/cowork/changelog",
+        kind="mintlify",
     ),
     SourceConfig(
         product="Codex",
@@ -79,4 +79,4 @@ SOURCES = (
     ),
 )
 
-PRODUCTS = ("ChatGPT", "Claude", "Claude Code", "Gemini", "Codex")
+PRODUCTS = ("ChatGPT", "Claude", "Claude Cowork", "Claude Code", "Codex")

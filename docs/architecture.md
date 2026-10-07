@@ -65,7 +65,7 @@ Pythonアプリは `collector/src/tech_news_app/fetchers.py` と `parser.py` を
 - Anthropic Support: Claude Release Notes
 - Anthropic Docs: Claude Code Changelog
 - GitHub Releases: `anthropics/claude-code`
-- Google: Gemini Release Notes
+- Anthropic: Claude Cowork Changelog(Claude Desktopのリリースノート)
 - OpenAI: Codex Changelog
 
 取得元ごとにHTML構造が違うため、パーサーはソース別に分けています。1つのソース取得に失敗しても、他のソースの取得とサイト生成は継続します。
