@@ -1,5 +1,9 @@
 # Tech News Morning
 
+**[アプリを開く](https://meak-c.github.io/tech_news_app-/)**
+
+iPhoneでは上のリンクをSafariで開き、共有メニュー →「ホーム画面に追加」→「追加」で登録できます。アプリ内ブラウザで開いた場合は、Safariで開き直してください。
+
 ChatGPT、ChatGPT Work、Claude、Claude Cowork、Claude Code、Codex、Geminiの公式更新情報だけを毎日収集し、日本語で要約した朝刊サイトを生成する個人用アプリです。GitHub ActionsでJST 03:07と11:15の1日2回実行し、GitHub Pagesへ公開します。昼は11:30頃の公開を目指します。
 
 ## 対象ソース
@@ -13,7 +17,6 @@ ChatGPT、ChatGPT Work、Claude、Claude Cowork、Claude Code、Codex、Gemini�
 | Claude Cowork | [Claude Cowork Changelog](https://claude.com/docs/cowork/changelog) |
 | Claude Cowork | [Claude Help Center: Cowork](https://support.claude.com/en/collections/19667525-claude-cowork)(記事の更新を検知) |
 | Codex | [Codex Changelog](https://developers.openai.com/codex/changelog) |
-
 | Gemini | [Gemini Apps Release Notes](https://gemini.google/release-notes/)(取得は英語版に固定) |
 | Gemini | [Google Workspace Updates: Gemini App](https://workspaceupdates.googleblog.com/search/label/Gemini%20App)(公式Atomフィード) |
 
