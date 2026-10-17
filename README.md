@@ -81,6 +81,7 @@ gemini-3.5-flash-lite
 export GEMINI_API_KEY="実際のAPIキー"
 export GEMINI_MODEL="gemini-3.5-flash-lite"
 export GEMINI_MIN_INTERVAL_SECONDS="4.1"
+export GEMINI_MAX_REQUESTS_PER_DAY="20"
 uv run --project collector python -m tech_news_app.main
 ```
 
@@ -97,7 +98,11 @@ APIキーの実値をソースコード、`.env.example`、news.json、DBへ保�
 
 Free Tierへ送る内容は公開済みの公式リリースノートに限定しています。料金とレート制限は変更されるため、運用前に[Gemini API Pricing](https://ai.google.dev/gemini-api/docs/pricing)を確認してください。
 
-`GEMINI_MIN_INTERVAL_SECONDS`は無料枠のRPM制限を避けるための呼び出し間隔です。初回は既存ニュースを順番に要約するため数分かかる場合があります。
+`GEMINI_MIN_INTERVAL_SECONDS`は呼び出し間隔です。`GEMINI_MAX_REQUESTS_PER_DAY`は新規・再要約・再試行を合計した日次リクエスト上限で、既定値は20、0ならAPIを呼び出しません。使用回数は既存SQLiteに保存し、同じDBでの再実行にも引き継ぎます。日付はGeminiのRPDリセットに合わせて米国太平洋時間で区切ります。
+
+上限到達後の記事は未要約で保存して次回以降へ回します。429を受けた場合も、その実行中の追加API呼び出しを止めます。20回・4.1秒は無料枠を保証する値ではありません。Free Tierの専用プロジェクトを使い、AI Studioの実際のRPM・TPM・RPDに合わせて設定してください。他のアプリの使用量や、DBが異なる実行の使用量はこのカウンタに含まれません。
+
+保存済み記事のタイトル・本文が変わった場合だけ再要約します。変更がない記事の要約は再利用します。更新時に要約できなかった場合は古い要約を最新本文に流用せず、未要約として再試行します。空の候補や不正なAPI応答も未要約として扱います。
 
 ## テストと静的チェック
 

@@ -5,10 +5,12 @@ import json
 from collections.abc import Collection
 from datetime import UTC, datetime
 
+from .budget import RequestBudget
 from .config import Settings
 from .exporter import write_news_json
 from .fetchers import NewsFetcher
 from .models import FetchedItem, NewsItem, RunLog
+from .parser import content_hash
 from .storage import NewsStorage
 from .summarizer import Summarizer, needs_resummary
 
@@ -104,14 +106,22 @@ def run(
         )
         return 0 if fetched_items else 1
 
-    summarizer = Summarizer(settings, use_llm=not no_llm)
     with NewsStorage(settings.db_path) as storage:
+        summarizer = Summarizer(
+            settings,
+            use_llm=not no_llm,
+            budget=RequestBudget(storage.connection, settings.gemini_max_requests_per_day),
+        )
         existing = storage.find_existing(fetched_items)
         saved_items = []
         new_count = 0
         for fetched in fetched_items:
             previous = existing.get(fetched.item_url)
-            if previous is not None and not needs_resummary(previous.summary_ja):
+            if (
+                previous is not None
+                and previous.content_hash == content_hash(fetched.title, fetched.raw_text)
+                and not needs_resummary(previous.summary_ja)
+            ):
                 summary = previous.summary_ja
             else:
                 summary = summarizer.summarize(fetched)

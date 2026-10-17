@@ -91,7 +91,8 @@ class NewsStorage:
             self.connection.execute(
                 """
                 UPDATE news
-                SET last_seen_at = ?, fetched_at = ?, raw_text = ?, summary_ja = ?, updated_at = ?
+                SET last_seen_at = ?, fetched_at = ?, raw_text = ?, summary_ja = ?,
+                    title = ?, content_hash = ?, importance = ?, updated_at = ?
                 WHERE id = ?
                 """,
                 (
@@ -99,6 +100,9 @@ class NewsStorage:
                     now.isoformat(),
                     item.raw_text,
                     summary_ja,
+                    item.title,
+                    digest,
+                    classify_importance(item.title, item.raw_text).value,
                     now.isoformat(),
                     existing["id"],
                 ),

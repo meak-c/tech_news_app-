@@ -1,8 +1,14 @@
+import json
 from datetime import UTC, datetime
 
+import pytest
+
+from tech_news_app import main
 from tech_news_app.config import Settings
+from tech_news_app.exporter import render_news_json
 from tech_news_app.main import backfill_summaries
 from tech_news_app.models import FetchedItem
+from tech_news_app.parser import content_hash
 from tech_news_app.storage import NewsStorage
 from tech_news_app.summarizer import FALLBACK_SUMMARY, Summarizer
 
@@ -55,4 +61,98 @@ def test_backfill_stops_after_failure_and_respects_skip_ids(tmp_path) -> None:
             storage.save_item(make_item(index), FALLBACK_SUMMARY)
         summarizer = StubSummarizer([FALLBACK_SUMMARY, "unused"])
         assert backfill_summaries(storage, summarizer, skip_ids={skipped.id}) == 0
+    assert summarizer.calls == 1
+
+
+def configure_run(monkeypatch, tmp_path, fetched, summarizer) -> Settings:
+    settings = Settings(
+        db_path=tmp_path / "news.sqlite",
+        output_path=tmp_path / "news.json",
+        gemini_api_key="dummy",
+        gemini_model="gemini-3.5-flash-lite",
+        gemini_min_interval_seconds=0,
+    )
+    monkeypatch.setattr(Settings, "from_env", lambda **kwargs: settings)
+    monkeypatch.setattr(main.NewsFetcher, "fetch_all", lambda self: (fetched, []))
+    monkeypatch.setattr(main, "Summarizer", lambda *args, **kwargs: summarizer)
+    return settings
+
+
+def test_run_reuses_summary_and_preserves_export_for_unchanged_article(
+    monkeypatch, tmp_path
+) -> None:
+    fetched = make_item(1)
+    summarizer = StubSummarizer([])
+    settings = configure_run(monkeypatch, tmp_path, [fetched], summarizer)
+    with NewsStorage(settings.db_path) as storage:
+        previous, _ = storage.save_item(fetched, "既存の要約")
+    assert main.run() == 0
+    with NewsStorage(settings.db_path) as storage:
+        actual = storage.all_news()[0]
+    volatile_fields = {"fetched_at", "last_seen_at", "updated_at", "is_new"}
+    assert actual.model_dump(exclude=volatile_fields) == previous.model_dump(
+        exclude=volatile_fields
+    )
+    # Compare the public payload against the previous behavior for an existing article.
+    # The fetch time advances on every run, while its content and newness stay the same.
+    previous.fetched_at = actual.fetched_at
+    previous.is_new = False
+    payload = json.loads(settings.output_path.read_text())
+    run_at = datetime.fromisoformat(payload["generated_at"])
+    assert payload == json.loads(render_news_json([previous], [], run_at, new_count=0))
+    assert summarizer.calls == 0
+
+
+@pytest.mark.parametrize(
+    "update",
+    [{"raw_text": "Changed body"}, {"title": "Changed title"}],
+)
+def test_run_resummarizes_changed_article(monkeypatch, tmp_path, update) -> None:
+    original = make_item(1)
+    changed = original.model_copy(update=update)
+    summarizer = StubSummarizer(["更新後の要約"])
+    settings = configure_run(monkeypatch, tmp_path, [changed], summarizer)
+    with NewsStorage(settings.db_path) as storage:
+        previous, _ = storage.save_item(original, "既存の要約")
+    assert main.run() == 0
+    with NewsStorage(settings.db_path) as storage:
+        saved = storage.all_news()[0]
+    assert saved.summary_ja == "更新後の要約"
+    assert saved.title == changed.title
+    assert saved.raw_text == changed.raw_text
+    assert saved.content_hash == content_hash(changed.title, changed.raw_text)
+    assert saved.id == previous.id
+    assert saved.first_seen_at == previous.first_seen_at
+    assert summarizer.calls == 1
+
+
+def test_run_retries_changed_article_after_failed_summary(monkeypatch, tmp_path) -> None:
+    original = make_item(1)
+    changed = original.model_copy(update={"raw_text": "Changed body"})
+    summarizer = StubSummarizer([FALLBACK_SUMMARY, "再試行後の要約"])
+    settings = configure_run(monkeypatch, tmp_path, [changed], summarizer)
+    with NewsStorage(settings.db_path) as storage:
+        storage.save_item(original, "古い本文の要約")
+    assert main.run() == 0
+    with NewsStorage(settings.db_path) as storage:
+        assert storage.all_news()[0].summary_ja == FALLBACK_SUMMARY
+    assert main.run() == 0
+    with NewsStorage(settings.db_path) as storage:
+        assert storage.all_news()[0].summary_ja == "再試行後の要約"
+    assert summarizer.calls == 2
+
+
+def test_run_resummarizes_legacy_inconsistent_hash(monkeypatch, tmp_path) -> None:
+    fetched = make_item(1)
+    summarizer = StubSummarizer(["修復後の要約"])
+    settings = configure_run(monkeypatch, tmp_path, [fetched], summarizer)
+    with NewsStorage(settings.db_path) as storage:
+        storage.save_item(fetched, "以前の要約")
+        storage.connection.execute("UPDATE news SET content_hash = 'legacy-stale-hash'")
+        storage.connection.commit()
+    assert main.run() == 0
+    with NewsStorage(settings.db_path) as storage:
+        saved = storage.all_news()[0]
+    assert saved.summary_ja == "修復後の要約"
+    assert saved.content_hash == content_hash(fetched.title, fetched.raw_text)
     assert summarizer.calls == 1
