@@ -68,6 +68,8 @@ Pythonアプリは `collector/src/tech_news_app/fetchers.py` と `parser.py` を
 - Anthropic: Claude Cowork Changelog(Claude Desktopのリリースノート)
 - Anthropic Support: Claude Cowork ヘルプセンター(記事の更新を検知)
 - OpenAI: Codex Changelog
+- Google: Gemini Apps Release Notes(英語版)
+- Google: Workspace Updates の Gemini App カテゴリ(Atom)
 
 取得元ごとにHTML構造が違うため、パーサーはソース別に分けています。1つのソース取得に失敗しても、他のソースの取得とサイト生成は継続します。
 

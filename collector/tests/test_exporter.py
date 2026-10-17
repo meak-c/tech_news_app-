@@ -104,7 +104,7 @@ def test_news_json_exposes_display_date_and_month() -> None:
 
 
 def test_news_json_excludes_importance_and_removed_products() -> None:
-    removed = make_news().model_copy(update={"id": 2, "product": "Gemini"})
+    removed = make_news().model_copy(update={"id": 2, "product": "Retired Product"})
     payload = json.loads(
         render_news_json([make_news(), removed], [], datetime(2026, 6, 23, tzinfo=UTC), 0)
     )

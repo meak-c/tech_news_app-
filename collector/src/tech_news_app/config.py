@@ -92,6 +92,23 @@ SOURCES = (
         url="https://developers.openai.com/codex/changelog",
         kind="codex",
     ),
+    SourceConfig(
+        product="Gemini",
+        source_name="Gemini Release Notes",
+        url="https://gemini.google/release-notes/",
+        fetch_url="https://gemini.google/us/release-notes/?hl=en",
+        kind="gemini",
+    ),
+    SourceConfig(
+        product="Gemini",
+        source_name="Google Workspace Updates: Gemini App",
+        url="https://workspaceupdates.googleblog.com/search/label/Gemini%20App",
+        fetch_url=(
+            "https://workspaceupdates.googleblog.com/feeds/posts/default/-/"
+            "Gemini%20App?alt=atom&max-results=12"
+        ),
+        kind="atom",
+    ),
 )
 
-PRODUCTS = ("ChatGPT", "ChatGPT Work", "Claude", "Claude Cowork", "Claude Code", "Codex")
+PRODUCTS = ("ChatGPT", "ChatGPT Work", "Codex", "Claude", "Claude Cowork", "Claude Code", "Gemini")

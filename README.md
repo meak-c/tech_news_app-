@@ -1,6 +1,6 @@
 # Tech News Morning
 
-ChatGPT、ChatGPT Work、Claude、Claude Cowork、Claude Code、Codexの公式更新情報だけを毎日収集し、日本語で要約した朝刊サイトを生成する個人用アプリです。GitHub ActionsでJST 03:07頃に実行し、GitHub Pagesへ公開します。
+ChatGPT、ChatGPT Work、Claude、Claude Cowork、Claude Code、Codex、Geminiの公式更新情報だけを毎日収集し、日本語で要約した朝刊サイトを生成する個人用アプリです。GitHub ActionsでJST 03:07頃に実行し、GitHub Pagesへ公開します。
 
 ## 対象ソース
 
@@ -14,7 +14,16 @@ ChatGPT、ChatGPT Work、Claude、Claude Cowork、Claude Code、Codexの公式�
 | Claude Cowork | [Claude Help Center: Cowork](https://support.claude.com/en/collections/19667525-claude-cowork)(記事の更新を検知) |
 | Codex | [Codex Changelog](https://developers.openai.com/codex/changelog) |
 
-一般ニュースサイト、ブログ、SNSは取得しません。
+| Gemini | [Gemini Apps Release Notes](https://gemini.google/release-notes/)(取得は英語版に固定) |
+| Gemini | [Google Workspace Updates: Gemini App](https://workspaceupdates.googleblog.com/search/label/Gemini%20App)(公式Atomフィード) |
+
+一般ニュースサイト、非公式ブログ、SNSは取得しません。Geminiは2つの取得元を1つの製品フィルタにまとめ、各記事の取得元と公式リンクを表示します。同じURLまたは同日・同タイトルの記事は既存の重複判定でまとめます。異なる見出しの関連発表は別記事として残します。
+
+製品フィルタはChatGPT、ChatGPT Work、Codex、Claude、Claude Cowork、Claude Code、Geminiの順です。
+
+## ホーム画面アイコン
+
+`web/public/app-icon.png`はユーザー提供画像をそのままコピーしたものです。iPhone用の`apple-touch-icon`と`manifest.webmanifest`の両方から参照します。マニフェストのURLは相対指定し、GitHub Pagesのリポジトリ配下でも起動できます。既存のホーム画面アイコンが更新されない場合は、公開反映後にSafariからホーム画面へ追加し直してください。
 
 ## ディレクトリ構成
 

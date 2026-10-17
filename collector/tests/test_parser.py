@@ -130,3 +130,24 @@ def test_helpcenter_article_returns_article_body_only() -> None:
         "<article><h1>T</h1><p>What changed  on October 6</p></article></main>"
     )
     assert parse_helpcenter_article(html) == "T What changed on October 6"
+
+
+def test_gemini_groups_features_under_dates_and_keeps_stable_urls():
+    from tech_news_app.parser import parse_gemini_release_notes
+
+    config = SourceConfig(product="Gemini", source_name="Gemini Release Notes",
+                          url="https://gemini.google/release-notes/", kind="gemini")
+    html = '''<main><h3>Navigation</h3><h2>2026.10.13</h2>
+    <div><h3>Feature one</h3><ul><li>What: new capability</li></ul></div>
+    <div><h3>Feature two</h3><p>Second body</p></div>
+    <h2>2026.09.30</h2><div><h3>Older feature</h3><p>Old body</p></div></main>'''
+    items = parse_gemini_release_notes(html, config)
+    assert [item.title for item in items] == ["Feature one", "Feature two", "Older feature"]
+    assert items[0].raw_text == "What: new capability"
+    assert items[0].published_at.date().isoformat() == "2026-10-13"
+    assert items[2].published_at.date().isoformat() == "2026-09-30"
+    assert items[0].item_url.endswith("#2026-10-13-feature-one")
+    assert len(parse_gemini_release_notes(html, SourceConfig(
+        product="Gemini", source_name="Gemini", url=config.url, max_items=1))) == 1
+    with pytest.raises(ValueError, match="no dated entries"):
+        parse_gemini_release_notes("<main>Changed HTML</main>", config)

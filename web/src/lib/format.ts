@@ -51,6 +51,7 @@ const PRODUCT_COLORS: Record<string, string> = {
   "Claude Cowork": "#f0b429",
   "Claude Code": "#b48cff",
   Codex: "#38bdf8",
+  Gemini: "#8ab4f8",
 };
 
 export function productColor(product: string): string {

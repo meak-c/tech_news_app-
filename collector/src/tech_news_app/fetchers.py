@@ -14,6 +14,7 @@ from .parser import (
     parse_claude_release_notes,
     parse_codex_changelog,
     parse_date,
+    parse_gemini_release_notes,
     parse_heading_document,
     parse_helpcenter_article,
     parse_helpcenter_collection,
@@ -50,6 +51,8 @@ class NewsFetcher:
         html = response.content.decode("utf-8", errors="replace")
         if source.kind == "atom":
             return self._parse_atom(response.content, source)
+        if source.kind == "gemini":
+            return parse_gemini_release_notes(html, source)
         if source.kind == "claude":
             return parse_claude_release_notes(html, source)
         if source.kind == "helpcenter":

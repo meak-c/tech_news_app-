@@ -230,6 +230,57 @@ def parse_mintlify_changelog(html: str, source: SourceConfig) -> list[FetchedIte
     return items
 
 
+def parse_gemini_release_notes(html: str, source: SourceConfig) -> list[FetchedItem]:
+    soup = BeautifulSoup(html, "html.parser")
+    root = soup.select_one("article, main") or soup
+    current_date: datetime | None = None
+    items: list[FetchedItem] = []
+
+    for heading in root.find_all(["h2", "h3"]):
+        title = normalize_text(heading.get_text(" ", strip=True))
+        if not title:
+            continue
+        if heading.name == "h2":
+            if _looks_like_date(title):
+                current_date = parse_date(title)
+            continue
+
+        if current_date is None:
+            continue
+
+        body_parts: list[str] = []
+        for sibling in heading.next_siblings:
+            if isinstance(sibling, Tag) and sibling.name in {"h1", "h2", "h3"}:
+                break
+            if isinstance(sibling, Tag):
+                text = normalize_text(sibling.get_text(" ", strip=True))
+                if text:
+                    body_parts.append(text)
+            if sum(map(len, body_parts)) >= 6000:
+                break
+        raw_text = normalize_text(" ".join(body_parts))[:6000]
+
+        anchor = heading.get("id") or _slug(
+            f"{current_date.date().isoformat() if current_date else ''}-{title}"
+        )
+        items.append(
+            FetchedItem(
+                product=source.product,
+                source_name=source.source_name,
+                source_url=source.url,
+                item_url=f"{source.url}#{anchor}",
+                title=title[:500],
+                published_at=current_date,
+                raw_text=raw_text,
+            )
+        )
+        if len(items) >= source.max_items:
+            break
+    if not items:
+        raise ValueError("Gemini release notes contained no dated entries")
+    return items
+
+
 def parse_codex_changelog(html: str, source: SourceConfig) -> list[FetchedItem]:
     soup = BeautifulSoup(html, "html.parser")
     items: list[FetchedItem] = []

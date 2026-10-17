@@ -104,3 +104,35 @@ def test_helpcenter_raises_when_every_article_fails(tmp_path) -> None:
     }
     with pytest.raises(ValueError):
         make_fetcher(pages, tmp_path).fetch_source(SOURCE)
+
+
+def test_gemini_official_sources_export_as_one_product(tmp_path):
+    from tech_news_app.config import SOURCES
+    from tech_news_app.exporter import render_news_json
+    from tech_news_app.storage import NewsStorage
+
+    sources = [source for source in SOURCES if source.product == "Gemini"]
+    assert len(sources) == 2
+    pages = {
+        sources[0].fetch_url: StubResponse(
+            '<main><h2>2026.10.13</h2><h3>New feature</h3><p>Body</p></main>'
+        ),
+        sources[1].fetch_url: StubResponse('''<feed xmlns="http://www.w3.org/2005/Atom">
+          <title>Gemini App</title><entry><id>official-update</id><title>Rollout update</title>
+          <published>2026-10-14T10:00:00Z</published>
+          <link href="https://workspaceupdates.googleblog.com/2026/10/update.html"/>
+          <content type="html">&lt;p&gt;Availability details&lt;/p&gt;</content>
+          </entry></feed>'''),
+    }
+    fetcher = make_fetcher(pages, tmp_path)
+    items = [item for source in sources for item in fetcher.fetch_source(source)]
+    assert items[1].raw_text == "Availability details"
+    assert len(fetcher._deduplicate(items + items)) == 2
+    with NewsStorage(tmp_path / "news.sqlite") as storage:
+        for item in items:
+            storage.save_item(item, "要約")
+        payload = json.loads(render_news_json(storage.all_news(), [], datetime.now(UTC), 2))
+    assert payload["products"].count("Gemini") == 1
+    assert payload["products"][:3] == ["ChatGPT", "ChatGPT Work", "Codex"]
+    assert [item["product"] for item in payload["items"]] == ["Gemini", "Gemini"]
+    assert len({item["source_name"] for item in payload["items"]}) == 2
