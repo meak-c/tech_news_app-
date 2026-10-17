@@ -5,9 +5,8 @@ import json
 from collections.abc import Collection
 from datetime import UTC, datetime
 
-from .budget import RequestBudget
 from .config import Settings
-from .exporter import write_news_json
+from .exporter import JST, write_news_json
 from .fetchers import NewsFetcher
 from .models import FetchedItem, NewsItem, RunLog
 from .parser import content_hash
@@ -110,7 +109,6 @@ def run(
         summarizer = Summarizer(
             settings,
             use_llm=not no_llm,
-            budget=RequestBudget(storage.connection, settings.gemini_max_requests_per_day),
         )
         existing = storage.find_existing(fetched_items)
         saved_items = []
@@ -134,9 +132,10 @@ def run(
         )
 
         latest = storage.all_news()
-        new_ids = {item.id for item in saved_items if item.is_new}
+        today = run_at.astimezone(JST).date()
         for item in latest:
-            item.is_new = item.id in new_ids
+            item.is_new = item.first_seen_at.astimezone(JST).date() == today
+        daily_new_count = sum(item.is_new for item in latest)
 
         if errors and fetched_items:
             status = "partial_success"
@@ -153,7 +152,7 @@ def run(
                 error_message=error_message,
             )
         )
-    write_news_json(settings.output_path, latest, errors, run_at, new_count)
+    write_news_json(settings.output_path, latest, errors, run_at, daily_new_count)
     print(
         f"Generated {settings.output_path} with {new_count} new item(s); "
         f"{backfilled} backfilled summary(ies); {len(errors)} source error(s)."

@@ -33,7 +33,7 @@ export function Header({ payload }: Props) {
 
       <p className="hero-lead">
         {hasNew
-          ? `今朝は ${payload.new_count} 件の新着があります。`
+          ? `今日は ${payload.new_count} 件の新着があります。`
           : "本日の新ニュースはありませんでした。最近の注目ニュースを表示しています。"}
       </p>
 

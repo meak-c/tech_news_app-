@@ -1,5 +1,5 @@
 import json
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 import pytest
 
@@ -84,8 +84,11 @@ def test_run_reuses_summary_and_preserves_export_for_unchanged_article(
     fetched = make_item(1)
     summarizer = StubSummarizer([])
     settings = configure_run(monkeypatch, tmp_path, [fetched], summarizer)
-    with NewsStorage(settings.db_path) as storage:
-        previous, _ = storage.save_item(fetched, "既存の要約")
+    with monkeypatch.context() as patch:
+        yesterday = datetime.now(UTC) - timedelta(days=1)
+        patch.setattr("tech_news_app.storage.utc_now", lambda: yesterday)
+        with NewsStorage(settings.db_path) as storage:
+            previous, _ = storage.save_item(fetched, "既存の要約")
     assert main.run() == 0
     with NewsStorage(settings.db_path) as storage:
         actual = storage.all_news()[0]
@@ -156,3 +159,52 @@ def test_run_resummarizes_legacy_inconsistent_hash(monkeypatch, tmp_path) -> Non
     assert saved.summary_ja == "修復後の要約"
     assert saved.content_hash == content_hash(fetched.title, fetched.raw_text)
     assert summarizer.calls == 1
+
+
+def test_two_runs_keep_morning_and_late_updates_in_today_then_clear_next_day(
+    monkeypatch, tmp_path
+):
+    import json
+
+    from tech_news_app import storage as storage_module
+
+    clock = [datetime.fromisoformat("2026-10-18T03:07:00+09:00")]
+
+    class Clock(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return clock[0].astimezone(tz)
+
+    morning = make_item(1).model_copy(update={
+        "published_at": datetime.fromisoformat("2026-10-17T23:00:00+09:00")
+    })
+    noon = make_item(2).model_copy(update={
+        "published_at": datetime.fromisoformat("2026-10-18T10:00:00+09:00")
+    })
+    fetched = [morning]
+    summarizer = StubSummarizer(["朝の要約", "昼の要約"])
+    settings = configure_run(monkeypatch, tmp_path, fetched, summarizer)
+    monkeypatch.setattr(main, "datetime", Clock)
+    monkeypatch.setattr(storage_module, "utc_now", lambda: clock[0].astimezone(UTC))
+    assert main.run() == 0
+    first = json.loads(settings.output_path.read_text())
+    assert first["new_count"] == 1
+    assert first["items"][0]["date"] == "2026-10-18"
+
+    clock[0] = datetime.fromisoformat("2026-10-18T11:15:00+09:00")
+    fetched.append(noon)
+    assert main.run() == 0
+    second = json.loads(settings.output_path.read_text())
+    assert second["new_count"] == 2
+    assert all(item["is_new"] and item["date"] == "2026-10-18" for item in second["items"])
+    assert summarizer.calls == 2
+
+    # No new items on another same-day run must not clear today's highlights.
+    assert main.run() == 0
+    assert json.loads(settings.output_path.read_text())["new_count"] == 2
+    clock[0] = datetime.fromisoformat("2026-10-19T00:01:00+09:00")
+    assert main.run() == 0
+    third = json.loads(settings.output_path.read_text())
+    assert third["new_count"] == 0
+    assert all(not item["is_new"] and item["date"] == "2026-10-18" for item in third["items"])
+    assert summarizer.calls == 2

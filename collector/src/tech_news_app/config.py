@@ -27,12 +27,6 @@ class Settings:
     request_timeout: int = 30
     user_agent: str = "tech-news-app/0.1 (+personal official release-note reader)"
 
-    gemini_max_requests_per_day: int = 20
-
-    def __post_init__(self) -> None:
-        if self.gemini_max_requests_per_day < 0:
-            raise ValueError("GEMINI_MAX_REQUESTS_PER_DAY must be non-negative")
-
     @classmethod
     def from_env(cls, output_override: str | None = None) -> Settings:
         return cls(
@@ -42,7 +36,6 @@ class Settings:
             ),
             gemini_api_key=os.getenv("GEMINI_API_KEY") or None,
             gemini_model=os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite"),
-            gemini_max_requests_per_day=int(os.getenv("GEMINI_MAX_REQUESTS_PER_DAY", "20")),
             gemini_min_interval_seconds=float(os.getenv("GEMINI_MIN_INTERVAL_SECONDS", "4.1")),
         )
 

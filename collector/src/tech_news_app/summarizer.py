@@ -1,12 +1,9 @@
 from __future__ import annotations
 
-import sqlite3
 import time
-from contextlib import closing
 
 import requests
 
-from .budget import RequestBudget
 from .config import Settings
 from .models import FetchedItem
 from .parser import normalize_text
@@ -24,13 +21,10 @@ def needs_resummary(summary: str) -> bool:
 
 
 class Summarizer:
-    def __init__(
-        self, settings: Settings, use_llm: bool = True, budget: RequestBudget | None = None
-    ) -> None:
+    def __init__(self, settings: Settings, use_llm: bool = True) -> None:
         self.settings = settings
         self.use_llm = use_llm and bool(settings.gemini_api_key)
         self.last_request_at = 0.0
-        self.budget = budget
         self.requests_stopped = False
 
     def summarize(self, item: FetchedItem) -> str:
@@ -70,9 +64,6 @@ class Summarizer:
             wait_seconds = self.settings.gemini_min_interval_seconds - elapsed
             if wait_seconds > 0:
                 time.sleep(wait_seconds)
-            if not self._acquire_request():
-                self.requests_stopped = True
-                return self.fallback(item)
             self.last_request_at = time.monotonic()
             try:
                 response = requests.post(
@@ -100,16 +91,6 @@ class Summarizer:
                 continue
             return self._response_text(response.json())
         return self.fallback(item)
-
-    def _acquire_request(self) -> bool:
-        if self.budget is not None:
-            return self.budget.try_acquire()
-        # Standalone callers share the same persisted budget as the collector.
-        self.settings.db_path.parent.mkdir(parents=True, exist_ok=True)
-        with closing(sqlite3.connect(self.settings.db_path)) as connection:
-            return RequestBudget(
-                connection, self.settings.gemini_max_requests_per_day
-            ).try_acquire()
 
     @staticmethod
     def _response_text(data: object) -> str:

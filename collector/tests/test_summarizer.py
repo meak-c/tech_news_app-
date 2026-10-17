@@ -134,41 +134,27 @@ def test_permanent_errors_do_not_retry(llm, item, monkeypatch, status):
 
 
 @pytest.mark.parametrize("failure", [requests.Timeout(), api_response({}, 503)])
-def test_transient_errors_retry_and_count_each_attempt(llm, item, monkeypatch, failure):
+def test_transient_errors_retry(llm, item, monkeypatch, failure):
     post = Mock(side_effect=[failure, success_response()])
     monkeypatch.setattr("tech_news_app.summarizer.requests.post", post)
     assert llm.summarize(item) != FALLBACK_SUMMARY
     assert post.call_count == 2
+
+
+def test_more_than_twenty_requests_and_old_budget_do_not_block(llm, item, monkeypatch):
     import sqlite3
 
+    # A prior deployment's counter is intentionally ignored after removing the cap.
     with sqlite3.connect(llm.settings.db_path) as connection:
-        assert (
-            connection.execute("SELECT SUM(request_count) FROM gemini_request_usage").fetchone()[0]
-            == 2
-        )
-
-
-def test_budget_shared_across_instances_and_includes_retries(llm, item, monkeypatch):
-    from dataclasses import replace
-
-    settings = replace(llm.settings, gemini_max_requests_per_day=2)
-    post = Mock(side_effect=[requests.Timeout(), success_response()])
+        connection.execute("CREATE TABLE gemini_request_usage (usage_date TEXT, request_count INT)")
+        connection.execute("INSERT INTO gemini_request_usage VALUES ('2026-10-18', 500)")
+    monkeypatch.setenv("GEMINI_MAX_REQUESTS_PER_DAY", "0")
+    post = Mock(return_value=success_response())
     monkeypatch.setattr("tech_news_app.summarizer.requests.post", post)
-    assert Summarizer(settings).summarize(item) != FALLBACK_SUMMARY
-    assert Summarizer(settings).summarize(item) == FALLBACK_SUMMARY
-    assert post.call_count == 2
-
-
-def test_zero_budget_disables_http(llm, item, monkeypatch):
-    from dataclasses import replace
-
-    post = Mock()
-    monkeypatch.setattr("tech_news_app.summarizer.requests.post", post)
-    assert (
-        Summarizer(replace(llm.settings, gemini_max_requests_per_day=0)).summarize(item)
-        == FALLBACK_SUMMARY
-    )
-    post.assert_not_called()
+    for _ in range(25):
+        assert llm.summarize(item) != FALLBACK_SUMMARY
+    assert Summarizer(llm.settings).summarize(item) != FALLBACK_SUMMARY
+    assert post.call_count == 26
 
 
 def test_retries_are_bounded(llm, item, monkeypatch):

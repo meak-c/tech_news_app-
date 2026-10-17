@@ -11,7 +11,7 @@ from .models import NewsItem, SourceError
 from .summarizer import FALLBACK_SUMMARY
 
 JST = ZoneInfo("Asia/Tokyo")
-# 公開日が日付のみの記事で、初回取得が公開日からこの日数以内なら取得日(JST)を表示日にする。
+# 初回取得が公開日からこの日数以内なら取得日(JST)を表示日にする。
 # 超える場合は初回取り込みなどで取得日に意味がないため、公開日をそのまま使う。
 MAX_DETECTION_LAG_DAYS = 3
 
@@ -35,15 +35,17 @@ def display_date(item: NewsItem) -> date | None:
     """画面に表示する日付(JST)を返す。
 
     リリースノートの日付はベンダー現地の日付なので、日本から見える日付とは1日ずれうる。
-    公開日が日付のみ(UTC 0:00固定)の場合は、このアプリが初めて取得した日(JST)を使う。
+    最近の更新は初めて取得した日(JST)でまとめ、同日複数回の取得も同じ日に表示する。
     """
     published = item.published_at
     first_seen = item.first_seen_at.astimezone(JST).date()
     if published is None:
         return first_seen
-    if published.astimezone(UTC).time() != time(0, 0):
-        return published.astimezone(JST).date()
-    published_date = published.astimezone(UTC).date()
+    published_date = (
+        published.astimezone(UTC).date()
+        if published.astimezone(UTC).time() == time(0, 0)
+        else published.astimezone(JST).date()
+    )
     lag_days = (first_seen - published_date).days
     if 0 <= lag_days <= MAX_DETECTION_LAG_DAYS:
         return first_seen

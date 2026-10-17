@@ -3,6 +3,8 @@ name: Tech News Morning
 on:
   schedule:
     - cron: "7 18 * * *"
+    # JST 11:15開始。取得・要約・公開の時間を見込み、11:30頃の更新を目指す。
+    - cron: "15 2 * * *"
   workflow_dispatch:
 
 concurrency:

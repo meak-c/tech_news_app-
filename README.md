@@ -1,6 +1,6 @@
 # Tech News Morning
 
-ChatGPT、ChatGPT Work、Claude、Claude Cowork、Claude Code、Codex、Geminiの公式更新情報だけを毎日収集し、日本語で要約した朝刊サイトを生成する個人用アプリです。GitHub ActionsでJST 03:07頃に実行し、GitHub Pagesへ公開します。
+ChatGPT、ChatGPT Work、Claude、Claude Cowork、Claude Code、Codex、Geminiの公式更新情報だけを毎日収集し、日本語で要約した朝刊サイトを生成する個人用アプリです。GitHub ActionsでJST 03:07と11:15の1日2回実行し、GitHub Pagesへ公開します。昼は11:30頃の公開を目指します。
 
 ## 対象ソース
 
@@ -90,7 +90,6 @@ gemini-3.5-flash-lite
 export GEMINI_API_KEY="実際のAPIキー"
 export GEMINI_MODEL="gemini-3.5-flash-lite"
 export GEMINI_MIN_INTERVAL_SECONDS="4.1"
-export GEMINI_MAX_REQUESTS_PER_DAY="20"
 uv run --project collector python -m tech_news_app.main
 ```
 
@@ -107,9 +106,7 @@ APIキーの実値をソースコード、`.env.example`、news.json、DBへ保�
 
 Free Tierへ送る内容は公開済みの公式リリースノートに限定しています。料金とレート制限は変更されるため、運用前に[Gemini API Pricing](https://ai.google.dev/gemini-api/docs/pricing)を確認してください。
 
-`GEMINI_MIN_INTERVAL_SECONDS`は呼び出し間隔です。`GEMINI_MAX_REQUESTS_PER_DAY`は新規・再要約・再試行を合計した日次リクエスト上限で、既定値は20、0ならAPIを呼び出しません。使用回数は既存SQLiteに保存し、同じDBでの再実行にも引き継ぎます。日付はGeminiのRPDリセットに合わせて米国太平洋時間で区切ります。
-
-上限到達後の記事は未要約で保存して次回以降へ回します。429を受けた場合も、その実行中の追加API呼び出しを止めます。20回・4.1秒は無料枠を保証する値ではありません。Free Tierの専用プロジェクトを使い、AI Studioの実際のRPM・TPM・RPDに合わせて設定してください。他のアプリの使用量や、DBが異なる実行の使用量はこのカウンタに含まれません。
+`GEMINI_MIN_INTERVAL_SECONDS`は呼び出し間隔です（既定4.1秒）。アプリ独自の日次API回数上限は設けません。Google側のレート制限で429を受けた場合は、その実行中の追加API呼び出しを止め、未要約分を次回以降へ回します。
 
 保存済み記事のタイトル・本文が変わった場合だけ再要約します。変更がない記事の要約は再利用します。更新時に要約できなかった場合は古い要約を最新本文に流用せず、未要約として再試行します。空の候補や不正なAPI応答も未要約として扱います。
 
@@ -125,7 +122,7 @@ cd web && npm test && npm run typecheck
 
 workflowは`.github/workflows/tech_news_app.yml`です。
 
-- 毎日18:07 UTC（JST 03:07頃）に実行
+- 毎日18:07 UTC（JST 03:07）と02:15 UTC（JST 11:15）に実行
 - Actions画面から手動実行可能
 - テスト後にニュースを取得し、`web/public/news.json`を出力
 - `data/news.sqlite`をリポジトリへcommitして次回へ引き継ぐ
@@ -148,7 +145,7 @@ GitHub FreeでPagesを無料利用する場合はpublicリポジトリが基本�
 本日の新ニュースはありませんでした。
 ```
 
-初期表示(Highlights)は絞り込みます。新着がある日は新着を全件表示し、新着がない日は各プロダクトの最新3件を表示します。過去分はプロダクト・月・検索のフィルタ、または「すべてのニュースを見る」から確認できます。
+初期表示(Highlights)は絞り込みます。新着は日本時間の当日に初めて取得した記事で、昼の更新でも朝の新着を維持します。新着がある日は新着を全件表示し、新着がない日は各プロダクトの最新3件を表示します。過去分はプロダクト・月・検索のフィルタ、または「すべてのニュースを見る」から確認できます。
 
 ## データ永続化
 
@@ -176,4 +173,4 @@ Settings → PagesのSourceが`GitHub Actions`になっているか、workflow�
 
 ### cronが時刻どおりに始まらない
 
-GitHub Actionsのscheduleは遅延する場合があります。03:07は目安です。必要ならActions画面から手動実行してください。
+GitHub Actionsのscheduleは遅延する場合があります。03:07開始・11:30頃公開は目安です。必要ならActions画面から手動実行してください。
